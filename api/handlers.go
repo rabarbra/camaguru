@@ -31,6 +31,12 @@ type LoginReq struct {
 }
 
 func signin(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	var req LoginReq
 	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 	dec := json.NewDecoder(r.Body)
@@ -86,6 +92,11 @@ func checkUser(db *sql.DB, u User) string {
 }
 
 func me(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	if r.Method == "GET" {
 		userId := CheckAuthorized(r)
 		if userId == 0 {
