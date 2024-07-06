@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"jwt"
 	"log"
 	"net/http"
 )
@@ -14,24 +15,66 @@ func sendJson(w http.ResponseWriter, status int, msg map[string]string) {
 	json.NewEncoder(w).Encode(msg)
 }
 
+func sendJsonBytes(w http.ResponseWriter, status int, msg []byte) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	w.Write(msg)
+}
+
 func sendError(w http.ResponseWriter, status int, msg string) {
 	sendJson(w, status, map[string]string{"err": msg})
 }
 
-func signin(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+type LoginReq struct {
+	Username string `json:"username"`
+	Pass     string `json:"pass"`
+}
 
+func signin(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	var req LoginReq
+	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+	dec := json.NewDecoder(r.Body)
+	if err := dec.Decode(&req); err != nil {
+		sendError(w, http.StatusBadRequest, "error decoding json")
+		return
+	}
+	if req.Username == "" {
+		sendError(w, http.StatusBadRequest, "username required")
+		return
+	}
+	if req.Pass == "" {
+		sendError(w, http.StatusBadRequest, "password required")
+		return
+	}
+
+	user, err := getUserByUsename(db, req.Username)
+	if err != nil {
+		sendError(w, http.StatusBadRequest, "no user")
+	}
+
+	if CheckPassHash(req.Pass, user.Pass) {
+		token, er := jwt.CreateJWT(SECRET, user.Id)
+		if er != nil {
+			sendError(w, http.StatusInternalServerError, "cannot create token")
+			return
+		}
+		sendJson(w, http.StatusOK, map[string]string{"token": token})
+		return
+	}
+
+	sendError(w, http.StatusBadRequest, "unauthorized")
 }
 
 func checkUser(db *sql.DB, u User) string {
 	if u.Username == "" {
 		return "username required"
-	} else if checkUserExists(db, "username", u.Username) {
+	} else if checkUserExists(db, "username", u.Username, u.Id) {
 		return "username exists"
 	}
 
 	if u.Email == "" {
 		return "email required"
-	} else if checkUserExists(db, "email", u.Email) {
+	} else if checkUserExists(db, "email", u.Email, u.Id) {
 		return "email exists"
 	}
 
@@ -44,6 +87,22 @@ func checkUser(db *sql.DB, u User) string {
 
 func me(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if r.Method == "GET" {
+		userId := CheckAuthorized(r)
+		if userId == 0 {
+			sendError(w, http.StatusBadRequest, "unauthorized")
+			return
+		}
+		user, err := getUserById(db, userId)
+		if err != nil {
+			sendError(w, http.StatusBadRequest, "user not found")
+			return
+		}
+		msg, er := json.Marshal(user)
+		if er != nil {
+			sendError(w, http.StatusBadRequest, "error marshaling")
+			return
+		}
+		sendJsonBytes(w, http.StatusOK, msg)
 		fmt.Println(r)
 	} else if r.Method == "POST" {
 		var u User
@@ -55,6 +114,7 @@ func me(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 			return
 		}
 
+		u.Id = 0
 		msg := checkUser(db, u)
 		if msg != "" {
 			sendError(w, http.StatusBadRequest, msg)
@@ -64,6 +124,14 @@ func me(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		u.EmailVerified = false
 		u.LikeNotify = true
 		u.CommNotify = true
+
+		hash, er := HashPass(u.Pass)
+		if er != nil {
+			sendError(w, http.StatusBadRequest, "error hashing password")
+			return
+		}
+
+		u.Pass = hash
 
 		err := createUser(db, u)
 		if err != nil {
@@ -75,6 +143,11 @@ func me(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		sendJson(w, http.StatusCreated, map[string]string{"message": "User created successfully"})
 		return
 	} else if r.Method == "PUT" {
+		userId := CheckAuthorized(r)
+		if userId == 0 {
+			sendError(w, http.StatusBadRequest, "unauthorized")
+			return
+		}
 		var u User
 		r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 
@@ -89,11 +162,24 @@ func me(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 			return
 		}
 
+		if u.Id != userId {
+			sendError(w, http.StatusBadRequest, "unauthorized")
+			return
+		}
+
 		msg := checkUser(db, u)
 		if msg != "" {
 			sendError(w, http.StatusBadRequest, msg)
 			return
 		}
+
+		hash, er := HashPass(u.Pass)
+		if er != nil {
+			sendError(w, http.StatusBadRequest, "error hashing password")
+			return
+		}
+
+		u.Pass = hash
 
 		err := updateUser(db, u)
 		if err != nil {

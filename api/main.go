@@ -10,6 +10,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+const SECRET = "secret"
+
 type Handler func(http.ResponseWriter, *http.Request, *sql.DB)
 
 func DBWrapper(db *sql.DB, f Handler) func(w http.ResponseWriter, r *http.Request) {

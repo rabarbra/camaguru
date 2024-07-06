@@ -6,11 +6,12 @@ import (
 )
 
 func createUser(db *sql.DB, user User) error {
-	_, err := db.Exec(`
+	res, err := db.Exec(`
 		INSERT INTO users(username, email, pass, email_verified, like_notify, comm_notify)
 		VALUES(?, ?, ?, ?, ?, ?)`,
 		user.Username, user.Email, user.Pass, user.EmailVerified, user.LikeNotify, user.CommNotify,
 	)
+	fmt.Println(res, err)
 	return err
 }
 
@@ -21,7 +22,7 @@ func updateUser(db *sql.DB, user User) error {
 	return err
 }
 
-func getUser(db *sql.DB, id int64) (User, error) {
+func getUserById(db *sql.DB, id int64) (User, error) {
 	var user User
 	err := db.QueryRow(
 		"SELECT id, username, email, pass FROM users WHERE id=?",
@@ -30,9 +31,21 @@ func getUser(db *sql.DB, id int64) (User, error) {
 	return user, err
 }
 
-func checkUserExists(db *sql.DB, field string, value string) bool {
+func getUserByUsename(db *sql.DB, username string) (User, error) {
+	var user User
+	err := db.QueryRow(
+		"SELECT id, username, email, pass FROM users WHERE username=?",
+		username,
+	).Scan(&user.Id, &user.Username, &user.Email, &user.Pass)
+	return user, err
+}
+
+func checkUserExists(db *sql.DB, field string, value string, id int64) bool {
 	var u string
 	query := fmt.Sprintf("SELECT %s FROM users WHERE %s=?", field, field)
+	if id != 0 {
+		query = fmt.Sprintf("SELECT %s FROM users WHERE %s=? AND id != %d", field, field, id)
+	}
 	err := db.QueryRow(query, value).Scan(&u)
 	if err == nil {
 		return true
