@@ -1,0 +1,6 @@
+# DB
+POSTGRES_USER: admin
+POSTGRES_PASSWORD: 12345
+POSTGRES_DB: camaguru
+# Backend
+JWT_SECRET: secret

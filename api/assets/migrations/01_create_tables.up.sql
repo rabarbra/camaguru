@@ -1,39 +1,58 @@
 CREATE TABLE IF NOT EXISTS users
 (
-    id              INTEGER PRIMARY KEY,
-    username        TEXT NOT NULL UNIQUE,
-    email           TEXT NOT NULL UNIQUE,
-    pass            TEXT NOT NULL,
-    email_verified  INTEGER,
-    like_notify     INTEGER,
-    comm_notify     INTEGER
+    id              INT GENERATED ALWAYS AS IDENTITY,
+    username        VARCHAR(50) NOT NULL UNIQUE,
+    email           VARCHAR(50) NOT NULL UNIQUE,
+    pass            VARCHAR(100) NOT NULL,
+    email_verified  BOOLEAN,
+    like_notify     BOOLEAN,
+    comm_notify     BOOLEAN,
+    PRIMARY KEY(id)
 );
 
 CREATE TABLE IF NOT EXISTS imgs
 (
-    id              INTEGER PRIMARY KEY,
-    link            TEXT NOT NULL,
-    created_at      TEXT NOT NULL
+    id              INT GENERATED ALWAYS AS IDENTITY,
+    link            VARCHAR(50) NOT NULL,
+    created_at      TIMESTAMP NOT NULL,
+    user_id         INT,
+    PRIMARY KEY(id),
+    CONSTRAINT fk_user
+        FOREIGN KEY(user_id) 
+	    REFERENCES users(id)
+	    ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS comments
 (
-    id              INTEGER PRIMARY KEY,
+    id              INT GENERATED ALWAYS AS IDENTITY,
     content         TEXT,
-    created_at      TEXT NOT NULL,
-    user_id         INTEGER,
-    img_id          INTEGER,
-    FOREIGN KEY(user_id)    REFERENCES users(id),
-    FOREIGN KEY(img_id)     REFERENCES imgs(id)
+    created_at      TIMESTAMP NOT NULL,
+    user_id         INT NOT NULL,
+    img_id          INT NOT NULL,
+    PRIMARY KEY(id),
+    CONSTRAINT fk_user
+        FOREIGN KEY(user_id) 
+	    REFERENCES users(id)
+	    ON DELETE CASCADE,
+    CONSTRAINT fk_img
+        FOREIGN KEY(img_id) 
+	    REFERENCES imgs(id)
+	    ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS likes
 (
-    id              INTEGER PRIMARY KEY,
-    user_id         INTEGER,
-    img_id          INTEGER,
-    FOREIGN KEY(user_id)    REFERENCES users(id),
-    FOREIGN KEY(img_id)     REFERENCES imgs(id)
+    id              INT GENERATED ALWAYS AS IDENTITY,
+    user_id         INT NOT NULL,
+    img_id          INT NOT NULL,
+    PRIMARY KEY(id),
+    CONSTRAINT fk_user
+        FOREIGN KEY(user_id) 
+	    REFERENCES users(id)
+	    ON DELETE CASCADE,
+    CONSTRAINT fk_img
+        FOREIGN KEY(img_id) 
+	    REFERENCES imgs(id)
+	    ON DELETE CASCADE
 );
-
-PRAGMA foreign_keys = ON;

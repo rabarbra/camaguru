@@ -53,7 +53,7 @@ func signin(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 
 	if CheckPassHash(req.Pass, user.Pass) {
-		token, er := jwt.CreateJWT(SECRET, user.Id)
+		token, er := jwt.CreateJWT(JWT_SECRET, user.Id)
 		if er != nil {
 			sendError(w, http.StatusInternalServerError, "cannot create token")
 			return

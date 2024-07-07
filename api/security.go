@@ -24,7 +24,7 @@ func CheckAuthorized(r *http.Request) int64 {
 	}
 	tokenString = tokenString[len("Bearer "):]
 
-	p, err := jwt.VerifyJWT(tokenString, SECRET)
+	p, err := jwt.VerifyJWT(tokenString, JWT_SECRET)
 	if err != nil {
 		return 0
 	}

@@ -2,15 +2,16 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
 )
 
-const SECRET = "secret"
+var JWT_SECRET = os.Getenv("JWT_SECRET")
 
 func migrate(db *sql.DB) {
 	sqlFile, err := os.Open("./assets/migrations/01_create_tables.up.sql")
@@ -32,7 +33,14 @@ func migrate(db *sql.DB) {
 }
 
 func main() {
-	db, err := sql.Open("sqlite3", "./camaguru.db")
+	connString := fmt.Sprintf(
+		"postgres://%s:%s@%s/%s?sslmode=disable",
+		os.Getenv("POSTGRES_USER"),
+		os.Getenv("POSTGRES_PASSWORD"),
+		os.Getenv("POSTGRES_HOST"),
+		os.Getenv("POSTGRES_DB"),
+	)
+	db, err := sql.Open("postgres", connString)
 	if err != nil {
 		log.Println(err)
 		return
@@ -41,9 +49,9 @@ func main() {
 	migrate(db)
 
 	http.HandleFunc("/signin", CorsM(DBM(db, signin)))
-	http.HandleFunc("POST /me", CorsM(DBM(db, postUser)))
-	http.HandleFunc("PUT /me/", CorsM(AuthDBM(db, putUser)))
 	http.HandleFunc("/me", CorsM(AuthDBM(db, getUser)))
+	http.HandleFunc("POST /me", CorsM(DBM(db, postUser)))
+	http.HandleFunc("PUT /me", CorsM(AuthDBM(db, putUser)))
 	http.HandleFunc("/img", CorsM(DBM(db, img)))
 
 	fs := http.FileServer(http.Dir("./assets/static"))
