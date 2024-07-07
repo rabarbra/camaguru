@@ -6,11 +6,13 @@ const Signin = (props) => {
         <div className="container flex align-middle justify-center">
             <form
                 className="flex flex-col justify-center gap-2"
-                onSubmit={(ev)=> {
+                onSubmit={async (ev)=> {
                     ev.preventDefault();
                     const username = ev.target[0].value
                     const pass = ev.target[1].value
-                    apiClient.authorize({username: username, pass: pass});
+                    const res = await apiClient.authorize({username: username, pass: pass});
+                    if (res.ok === "true")
+                        props.route("/me");
                 }}
             >
                 <input type="text" required />

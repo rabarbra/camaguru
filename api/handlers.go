@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"jwt"
 	"log"
 	"net/http"
@@ -31,12 +30,6 @@ type LoginReq struct {
 }
 
 func signin(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
 	var req LoginReq
 	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 	dec := json.NewDecoder(r.Body)
@@ -55,7 +48,8 @@ func signin(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	user, err := getUserByUsename(db, req.Username)
 	if err != nil {
-		sendError(w, http.StatusBadRequest, "no user")
+		sendError(w, http.StatusBadRequest, "no such user")
+		return
 	}
 
 	if CheckPassHash(req.Pass, user.Pass) {
@@ -91,114 +85,99 @@ func checkUser(db *sql.DB, u User) string {
 	return ""
 }
 
-func me(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
+func postUser(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	var u User
+	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+
+	dec := json.NewDecoder(r.Body)
+	if err := dec.Decode(&u); err != nil {
+		sendError(w, http.StatusBadRequest, "error decoding json")
 		return
 	}
-	if r.Method == "GET" {
-		userId := CheckAuthorized(r)
-		if userId == 0 {
-			sendError(w, http.StatusBadRequest, "unauthorized")
-			return
-		}
-		user, err := getUserById(db, userId)
-		if err != nil {
-			sendError(w, http.StatusBadRequest, "user not found")
-			return
-		}
-		msg, er := json.Marshal(user)
-		if er != nil {
-			sendError(w, http.StatusBadRequest, "error marshaling")
-			return
-		}
-		sendJsonBytes(w, http.StatusOK, msg)
-		fmt.Println(r)
-	} else if r.Method == "POST" {
-		var u User
-		r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 
-		dec := json.NewDecoder(r.Body)
-		if err := dec.Decode(&u); err != nil {
-			sendError(w, http.StatusBadRequest, "error decoding json")
-			return
-		}
-
-		u.Id = 0
-		msg := checkUser(db, u)
-		if msg != "" {
-			sendError(w, http.StatusBadRequest, msg)
-			return
-		}
-
-		u.EmailVerified = false
-		u.LikeNotify = true
-		u.CommNotify = true
-
-		hash, er := HashPass(u.Pass)
-		if er != nil {
-			sendError(w, http.StatusBadRequest, "error hashing password")
-			return
-		}
-
-		u.Pass = hash
-
-		err := createUser(db, u)
-		if err != nil {
-			log.Println("Error inserting user:", err)
-			sendError(w, http.StatusBadRequest, "error creating user")
-			return
-		}
-
-		sendJson(w, http.StatusCreated, map[string]string{"message": "User created successfully"})
+	u.Id = 0
+	msg := checkUser(db, u)
+	if msg != "" {
+		sendError(w, http.StatusBadRequest, msg)
 		return
-	} else if r.Method == "PUT" {
-		userId := CheckAuthorized(r)
-		if userId == 0 {
-			sendError(w, http.StatusBadRequest, "unauthorized")
-			return
-		}
-		var u User
-		r.Body = http.MaxBytesReader(w, r.Body, 1048576)
-
-		dec := json.NewDecoder(r.Body)
-		if err := dec.Decode(&u); err != nil {
-			sendError(w, http.StatusBadRequest, "error decoding json")
-			return
-		}
-
-		if u.Id == 0 {
-			sendError(w, http.StatusBadRequest, "id required")
-			return
-		}
-
-		if u.Id != userId {
-			sendError(w, http.StatusBadRequest, "unauthorized")
-			return
-		}
-
-		msg := checkUser(db, u)
-		if msg != "" {
-			sendError(w, http.StatusBadRequest, msg)
-			return
-		}
-
-		hash, er := HashPass(u.Pass)
-		if er != nil {
-			sendError(w, http.StatusBadRequest, "error hashing password")
-			return
-		}
-
-		u.Pass = hash
-
-		err := updateUser(db, u)
-		if err != nil {
-			sendError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		sendJson(w, http.StatusOK, map[string]string{"message": "User updated successfully"})
 	}
+
+	u.EmailVerified = false
+	u.LikeNotify = true
+	u.CommNotify = true
+
+	hash, er := HashPass(u.Pass)
+	if er != nil {
+		sendError(w, http.StatusBadRequest, "error hashing password")
+		return
+	}
+
+	u.Pass = hash
+
+	err := createUser(db, u)
+	if err != nil {
+		log.Println("Error inserting user:", err)
+		sendError(w, http.StatusBadRequest, "error creating user")
+		return
+	}
+
+	sendJson(w, http.StatusCreated, map[string]string{"message": "User created successfully"})
+}
+
+func getUser(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
+	user, err := getUserById(db, userId)
+	if err != nil {
+		sendError(w, http.StatusBadRequest, "user not found")
+		return
+	}
+	msg, er := json.Marshal(user)
+	if er != nil {
+		sendError(w, http.StatusBadRequest, "error marshaling")
+		return
+	}
+	sendJsonBytes(w, http.StatusOK, msg)
+}
+
+func putUser(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
+	var u User
+	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+
+	dec := json.NewDecoder(r.Body)
+	if err := dec.Decode(&u); err != nil {
+		sendError(w, http.StatusBadRequest, "error decoding json")
+		return
+	}
+
+	if u.Id == 0 {
+		sendError(w, http.StatusBadRequest, "id required")
+		return
+	}
+
+	if u.Id != userId {
+		sendError(w, http.StatusBadRequest, "unauthorized")
+		return
+	}
+
+	msg := checkUser(db, u)
+	if msg != "" {
+		sendError(w, http.StatusBadRequest, msg)
+		return
+	}
+
+	hash, er := HashPass(u.Pass)
+	if er != nil {
+		sendError(w, http.StatusBadRequest, "error hashing password")
+		return
+	}
+
+	u.Pass = hash
+
+	err := updateUser(db, u)
+	if err != nil {
+		sendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	sendJson(w, http.StatusOK, map[string]string{"message": "User updated successfully"})
 }
 
 func img(w http.ResponseWriter, r *http.Request, db *sql.DB) {

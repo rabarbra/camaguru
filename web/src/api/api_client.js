@@ -15,9 +15,6 @@ class ApiClient {
     if (localStorage.getItem('access_token')) {
       this.headers['Authorization'] = `Bearer ${localStorage.getItem('access_token')}`;
     }
-    if (localStorage.getItem('refresh_token')) {
-      this.refresh_token = localStorage.getItem('refresh_token');
-    }
   }
 
   async proceedResponse(response) {
@@ -84,12 +81,12 @@ class ApiClient {
     else {
       response_body = await this.sendRequest('signin', 'POST', payload, query);
     }
-    if (response_body.error)
+    if (response_body.err)
       return response_body;
-    const access_token = response_body.access_token;
+    const access_token = response_body.token;
     this.headers['Authorization'] = `Bearer ${access_token}`;
     localStorage.setItem('access_token', access_token);
-    const me = await this.get("/me");
+    const me = await this.get("me");
     if (me.error)
       return me;
     localStorage.setItem("me", JSON.stringify(me));

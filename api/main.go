@@ -12,14 +12,6 @@ import (
 
 const SECRET = "secret"
 
-type Handler func(http.ResponseWriter, *http.Request, *sql.DB)
-
-func DBWrapper(db *sql.DB, f Handler) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		f(w, r, db)
-	}
-}
-
 func migrate(db *sql.DB) {
 	sqlFile, err := os.Open("./assets/migrations/01_create_tables.up.sql")
 	if err != nil {
@@ -48,9 +40,11 @@ func main() {
 	defer db.Close()
 	migrate(db)
 
-	http.HandleFunc("/signin", DBWrapper(db, signin))
-	http.HandleFunc("/me", DBWrapper(db, me))
-	http.HandleFunc("/img", DBWrapper(db, img))
+	http.HandleFunc("/signin", CorsM(DBM(db, signin)))
+	http.HandleFunc("POST /me", CorsM(DBM(db, postUser)))
+	http.HandleFunc("PUT /me/", CorsM(AuthDBM(db, putUser)))
+	http.HandleFunc("/me", CorsM(AuthDBM(db, getUser)))
+	http.HandleFunc("/img", CorsM(DBM(db, img)))
 
 	fs := http.FileServer(http.Dir("./assets/static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
