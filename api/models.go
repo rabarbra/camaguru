@@ -13,6 +13,7 @@ type User struct {
 type Img struct {
 	Id        int64  `json:"id"`
 	Link      string `json:"link"`
+	UserId    int64  `json:"user_id"`
 	CreatedAt string `json:"created_at"`
 }
 
