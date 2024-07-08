@@ -9,6 +9,7 @@ import Profile from "./pages/profile";
 import Header from "./components/header";
 import Footer from "./components/footer";
 import Signup from "./pages/signup";
+import Imgs from "./pages/imgs";
 
 const App = (props) => {
     return (
@@ -22,6 +23,7 @@ const App = (props) => {
 			    	<Route path="/signup" element={<Video/>}/>
                     <Route path="/video" element={<Video/>}/>
 			    	<Route auth path="/me" element={<Profile/>}/>
+			    	<Route auth path="/imgs" element={<Imgs/>}/>
                 </Router>
             </main>
             <Footer/>
