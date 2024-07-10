@@ -52,7 +52,9 @@ func main() {
 	http.HandleFunc("/me", CorsM(AuthDBM(db, getUser)))
 	http.HandleFunc("POST /me", CorsM(DBM(db, postUser)))
 	http.HandleFunc("PUT /me", CorsM(AuthDBM(db, putUser)))
-	http.HandleFunc("/img", CorsM(DBM(db, img)))
+	http.HandleFunc("POST /img", CorsM(AuthDBM(db, postImg)))
+	http.HandleFunc("/img", CorsM(DBM(db, getImgs)))
+	http.HandleFunc("/img/{id}", CorsM(DBM(db, getImg)))
 
 	fs := http.FileServer(http.Dir("./assets/static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))

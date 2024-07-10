@@ -40,19 +40,19 @@ func getImgs(db *sql.DB, limit int, offset int) ([]Img, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	return nil, nil
-	// cols, _ := rows.Columns()
-	// row := make([]Img, len(cols))
-	// imgs := make([]*Img, len(cols))
-	// for i := range row {
-	// 	imgs[i] = &row[i]
-	// }
-	// for rows.Next() {
-	// 	err = rows.Scan < Img > (imgs)
-	// 	if err != nil {
-	// 		fmt.Println("cannot scan row:", err)
-	// 	}
-	// 	fmt.Println(row...)
-	// }
-	// return rows.Err()
+
+	var imgs []Img
+	for rows.Next() {
+		var img Img
+		if err := rows.Scan(&img.Id, &img.Link, &img.CreatedAt, &img.UserId); err != nil {
+			return nil, err
+		}
+		imgs = append(imgs, img)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return imgs, nil
 }

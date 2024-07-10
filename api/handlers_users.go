@@ -8,22 +8,6 @@ import (
 	"net/http"
 )
 
-func sendJson(w http.ResponseWriter, status int, msg map[string]string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(msg)
-}
-
-func sendJsonBytes(w http.ResponseWriter, status int, msg []byte) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	w.Write(msg)
-}
-
-func sendError(w http.ResponseWriter, status int, msg string) {
-	sendJson(w, status, map[string]string{"err": msg})
-}
-
 type LoginReq struct {
 	Username string `json:"username"`
 	Pass     string `json:"pass"`
@@ -178,16 +162,4 @@ func putUser(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
 		return
 	}
 	sendJson(w, http.StatusOK, map[string]string{"message": "User updated successfully"})
-}
-
-func img(w http.ResponseWriter, r *http.Request, db *sql.DB) {
-	data := map[string]string{"status": "ok"}
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		http.Error(w, "Error encoding JSON", http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonData)
 }
