@@ -41,9 +41,16 @@ class ApiClient {
       headers: {...this.headers, ...headers},
     };
     if (body) {
-      params.body = JSON.stringify(body);
+      if (body instanceof FormData) {
+        params.body = body;
+        // params.headers['Content-Type'] = 'multipart/form-data';
+      } else {
+        params.body = JSON.stringify(body);
+        params.headers['Content-Type'] = 'application/json';
+      }
     }
-    params.headers['Content-Type'] = 'application/json';
+    else
+      params.headers['Content-Type'] = 'application/json';
     // params.mode = "no-cors"
     if (query) {
       Object.entries(query).forEach(([key, value]) => {

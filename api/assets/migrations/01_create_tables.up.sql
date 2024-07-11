@@ -4,17 +4,17 @@ CREATE TABLE IF NOT EXISTS users
     username        VARCHAR(50) NOT NULL UNIQUE,
     email           VARCHAR(50) NOT NULL UNIQUE,
     pass            VARCHAR(100) NOT NULL,
-    email_verified  BOOLEAN DEFAULT f,
-    like_notify     BOOLEAN DEFAULT t,
-    comm_notify     BOOLEAN DEFAULT t,
+    email_verified  BOOLEAN DEFAULT FALSE,
+    like_notify     BOOLEAN DEFAULT TRUE,
+    comm_notify     BOOLEAN DEFAULT TRUE,
     PRIMARY KEY(id)
 );
 
 CREATE TABLE IF NOT EXISTS imgs
 (
     id              INT GENERATED ALWAYS AS IDENTITY,
-    link            VARCHAR(50) NOT NULL,
-    created_at      TIMESTAMP NOT NULL DEFAULT NOW(),
+    link            VARCHAR(255) NOT NULL,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     user_id         INT,
     PRIMARY KEY(id),
     CONSTRAINT fk_user
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS comments
 (
     id              INT GENERATED ALWAYS AS IDENTITY,
     content         TEXT,
-    created_at      TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     user_id         INT NOT NULL,
     img_id          INT NOT NULL,
     PRIMARY KEY(id),

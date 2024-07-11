@@ -20,6 +20,8 @@ services:
       POSTGRES_DB: $POSTGRES_DB
       POSTGRES_HOST: db
       JWT_SECRET: $JWT_SECRET
+      MAX_UPLOAD_SIZE: $MAX_UPLOAD_SIZE
+      UPLOAD_DIRECTORY: $UPLOAD_DIRECTORY
       air_wd: "/app"
     volumes:
       - ./api:/app
