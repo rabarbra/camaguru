@@ -31,10 +31,10 @@ func getImgById(db *sql.DB, id int64) (Img, error) {
 	return img, err
 }
 
-func getImgs(db *sql.DB, limit int, offset int) ([]Img, error) {
+func getImgs(db *sql.DB, userId int64, limit int, offset int) ([]Img, error) {
 	rows, err := db.Query(fmt.Sprintf(
-		"SELECT id, link, created_at, user_if FROM imgs LIMIT=%d OFFSET=%d;",
-		limit, offset,
+		"SELECT id, link, created_at, user_id FROM imgs WHERE user_id=%d LIMIT %d OFFSET %d;",
+		userId, limit, offset,
 	))
 	if err != nil {
 		return nil, err
