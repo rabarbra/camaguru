@@ -3,6 +3,8 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"strings"
 )
 
 func createUser(db *sql.DB, user User) error {
@@ -20,6 +22,26 @@ func updateUser(db *sql.DB, user User) error {
 		user.Username, user.Email, user.Pass, user.EmailVerified, user.LikeNotify, user.CommNotify, user.Id,
 	))
 	return err
+}
+
+func partUpdateUser(db *sql.DB, userId int64, updates map[string]interface{}) error {
+	var setClauses []string
+	var args []interface{}
+	argId := 1
+	for field, value := range updates {
+		setClauses = append(setClauses, fmt.Sprintf("%s = $%d", field, argId))
+		args = append(args, value)
+		argId++
+	}
+	args = append(args, userId)
+
+	query := fmt.Sprintf("UPDATE users SET %s WHERE id = $%d", strings.Join(setClauses, ", "), argId)
+	_, err := db.Exec(query, args...)
+	if err != nil {
+		log.Println("Update user error:", err)
+		return err
+	}
+	return nil
 }
 
 func getUserById(db *sql.DB, id int64) (User, error) {

@@ -1,48 +1,54 @@
 import ftReact from '@rabarbra/ft_react';
+import { apiClient } from '../api/api_client';
+import { API_ENDPOINT } from '../config';
 
 const Imgs = () => {
-  return (
-    <div>
-        <div className="carousel carousel-center rounded-box">
-        <div id="slide1" className="carousel-item relative w-full">
-            <img
-            src="https://img.daisyui.com/images/stock/photo-1625726411847-8cbb60cc71e6.jpg"
-            className="w-full" />
-            <div className="absolute left-5 right-5 top-1/2 flex -translate-y-1/2 transform justify-between">
-            <a href="#slide4" className="btn btn-circle">❮</a>
-            <a href="#slide2" className="btn btn-circle">❯</a>
+    const [imgs, setImgs] = ftReact.useState(null);
+    const [err, setErr] = ftReact.useState("");
+    ftReact.useEffect(async () => {
+        if (!imgs) {
+            const resp = await apiClient.get('img?limit=100');
+            if (resp.err)
+                setErr(resp.err)
+            else
+                setImgs(resp);
+        }
+    }, [imgs, setImgs])
+    return (
+        <div>
+            <div>Imgs</div>
+            <form
+                enctype="multipart/form-data"
+                onSubmit={async (ev) => {
+                    ev.preventDefault();
+                    const formData = new FormData(ev.target);
+                    const resp = await apiClient.post(
+                        'img',
+                        formData,
+                    )
+                    if (resp.err)
+                        setErr(resp.err)
+                    else
+                        setImgs(null);
+                }}
+            >
+                <input type='file' name="file" required/>
+                <button className="btn" type='submit'>Upload</button>
+            </form>
+            <div className="carousel rounded-box">
+            {imgs && imgs.map(item=>(
+                <div className="carousel-item">
+                    <img src={`${API_ENDPOINT}/${item.link.substring(7)}`} />
+                </div>
+            ))}
             </div>
+            {err && 
+                <div role="alert" className="alert alert-error">
+                    <span>{err}</span>
+                </div>
+            }
         </div>
-        <div id="slide2" className="carousel-item relative w-full">
-            <img
-            src="https://img.daisyui.com/images/stock/photo-1609621838510-5ad474b7d25d.jpg"
-            className="w-full" />
-            <div className="absolute left-5 right-5 top-1/2 flex -translate-y-1/2 transform justify-between">
-            <a href="#slide1" className="btn btn-circle">❮</a>
-            <a href="#slide3" className="btn btn-circle">❯</a>
-            </div>
-        </div>
-        <div id="slide3" className="carousel-item relative w-full">
-            <img
-            src="https://img.daisyui.com/images/stock/photo-1414694762283-acccc27bca85.jpg"
-            className="w-full" />
-            <div className="absolute left-5 right-5 top-1/2 flex -translate-y-1/2 transform justify-between">
-            <a href="#slide2" className="btn btn-circle">❮</a>
-            <a href="#slide4" className="btn btn-circle">❯</a>
-            </div>
-        </div>
-        <div id="slide4" className="carousel-item relative w-full">
-            <img
-            src="https://img.daisyui.com/images/stock/photo-1665553365602-b2fb8e5d1707.jpg"
-            className="w-full" />
-            <div className="absolute left-5 right-5 top-1/2 flex -translate-y-1/2 transform justify-between">
-            <a href="#slide3" className="btn btn-circle">❮</a>
-            <a href="#slide1" className="btn btn-circle">❯</a>
-            </div>
-        </div>
-        </div>
-    </div>
-  );
+    )
 }
 
 export default Imgs;

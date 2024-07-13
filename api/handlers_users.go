@@ -82,40 +82,22 @@ func getUser(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
 }
 
 func putUser(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
-	var u User
-	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
-
-	dec := json.NewDecoder(r.Body)
-	if err := dec.Decode(&u); err != nil {
-		sendError(w, http.StatusBadRequest, "error decoding json")
+	var updates map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	if u.Id == 0 {
-		sendError(w, http.StatusBadRequest, "id required")
-		return
+	if updates["pass"] != nil {
+		hash, er := HashPass(updates["pass"].(string))
+		if er != nil {
+			sendError(w, http.StatusBadRequest, "error hashing password")
+			return
+		}
+		updates["pass"] = hash
 	}
 
-	if u.Id != userId {
-		sendError(w, http.StatusBadRequest, "unauthorized")
-		return
-	}
-
-	msg := checkUser(db, u)
-	if msg != "" {
-		sendError(w, http.StatusBadRequest, msg)
-		return
-	}
-
-	hash, er := HashPass(u.Pass)
-	if er != nil {
-		sendError(w, http.StatusBadRequest, "error hashing password")
-		return
-	}
-
-	u.Pass = hash
-
-	err := updateUser(db, u)
+	err := partUpdateUser(db, userId, updates)
 	if err != nil {
 		sendError(w, http.StatusBadRequest, err.Error())
 		return

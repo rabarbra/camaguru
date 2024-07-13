@@ -6,7 +6,7 @@ const Header = (props) => {
         <header>
             <div className="navbar bg-base-100">
             <div className="flex-1">
-                <a className="btn btn-ghost text-xl">Camaguru</a>
+                <a className="btn btn-ghost text-xl" href="/">Camaguru</a>
             </div>
             {apiClient.authorized() &&
                 <div className="flex-none">
@@ -25,9 +25,13 @@ const Header = (props) => {
                     <ul
                         tabIndex={0}
                         className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 p-2 shadow">
-                        <li><a>Profile</a></li>
-                        <li><a>Settings</a></li>
-                        <li><a>Logout</a></li>
+                        <li><a href="/me">Profile</a></li>
+                        <li><a
+                            href="/signin"
+                            onClick={()=>{
+                                apiClient.unauthorize();
+                            }}
+                        >Logout</a></li>
                     </ul>
                     </div>
                 </div>
