@@ -46,13 +46,14 @@ func main() {
 	defer db.Close()
 	migrate(db)
 
-	http.HandleFunc("/signin", CorsM(DBM(db, signin)))
-
 	http.HandleFunc("/me", CorsM(AuthDBM(db, getUser)))
 	http.HandleFunc("POST /me", CorsM(DBM(db, postUser)))
 	http.HandleFunc("PUT /me", CorsM(AuthDBM(db, putUser)))
 
-	http.HandleFunc("/verify", CorsM(DBM(db, verifyEmail)))
+	http.HandleFunc("/auth/signin", CorsM(DBM(db, signin)))
+	http.HandleFunc("/auth/verify", CorsM(DBM(db, verifyEmail)))
+	http.HandleFunc("/auth/pass", CorsM(DBM(db, resetPasswordUnauth)))
+	http.HandleFunc("/auth/reset", CorsM(AuthDBM(db, resetPassword)))
 
 	http.HandleFunc("/img", CorsM(AuthDBM(db, getImg)))
 	http.HandleFunc("POST /img", CorsM(AuthDBM(db, postImg)))

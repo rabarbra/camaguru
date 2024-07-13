@@ -19,6 +19,7 @@ var (
 
 	JWT_SECRET               = os.Getenv("JWT_SECRET")
 	EMAIL_VERIFIED_REDIR_URL = os.Getenv("EMAIL_VERIFIED_REDIR_URL")
+	FRONTEND_HOST            = os.Getenv("FRONTEND_HOST")
 	SMTP_FROM                = os.Getenv("SMTP_FROM")
 	SMTP_PASSWORD            = os.Getenv("SMTP_PASSWORD")
 	SMTP_HOST                = os.Getenv("SMTP_HOST")

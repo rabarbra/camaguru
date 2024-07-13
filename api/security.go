@@ -2,6 +2,7 @@ package main
 
 import (
 	"jwt"
+	"log"
 	"net/http"
 	"time"
 
@@ -15,6 +16,7 @@ func HashPass(pass string) (string, error) {
 
 func CheckPassHash(pass string, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(pass))
+	log.Println(err)
 	return err == nil
 }
 

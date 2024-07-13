@@ -10,6 +10,7 @@ import Header from "./components/header";
 import Footer from "./components/footer";
 import Signup from "./pages/signup";
 import Imgs from "./pages/imgs";
+import Reset from "./pages/reset";
 
 const App = (props) => {
     return (
@@ -19,6 +20,7 @@ const App = (props) => {
                 <Router>
                     <Route fallback path="/" element={<Main/>}/>
 			    	<Route login path="/signin" element={<Signin/>}/>
+			    	<Route path="/reset" element={<Reset/>}/>
 			    	<Route path="/signup" element={<Signup/>}/>
 			    	<Route path="/signup" element={<Video/>}/>
                     <Route path="/video" element={<Video/>}/>

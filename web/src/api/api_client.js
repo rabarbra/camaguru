@@ -83,10 +83,10 @@ class ApiClient {
 
   async authorize (payload, query = null) {
     let response_body;
-    if ("access_token" in payload)
+    if ("token" in payload)
       response_body = payload;
     else {
-      response_body = await this.sendRequest('signin', 'POST', payload, query);
+      response_body = await this.sendRequest('auth/signin', 'POST', payload, query);
     }
     if (response_body.err)
       return response_body;
