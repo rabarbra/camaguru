@@ -3,6 +3,7 @@ package main
 import (
 	"jwt"
 	"net/http"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -26,6 +27,9 @@ func CheckAuthorized(r *http.Request) int64 {
 
 	p, err := jwt.VerifyJWT(tokenString, JWT_SECRET)
 	if err != nil {
+		return 0
+	}
+	if time.Now().Unix() > p.Exp {
 		return 0
 	}
 	return p.Id

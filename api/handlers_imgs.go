@@ -12,22 +12,9 @@ import (
 	"time"
 )
 
-func getMaxUploadSize() int64 {
-	var maxUploadSize, err = strconv.Atoi(os.Getenv("MAX_UPLOAD_SIZE"))
-	if err != nil {
-		maxUploadSize = 10 * 1024 * 1024
-	}
-	return int64(maxUploadSize)
-}
-
-var (
-	maxUploadSize = getMaxUploadSize()
-	uploadDir     = os.Getenv("UPLOAD_DIRECTORY")
-)
-
 func postImg(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
-	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
-		log.Println(err, maxUploadSize)
+	if err := r.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
+		log.Println(err, MAX_UPLOAD_SIZE)
 		sendError(w, http.StatusBadRequest, "The uploaded file is too big.")
 		return
 	}
@@ -46,12 +33,12 @@ func postImg(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
 		return
 	}
 
-	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
-		os.MkdirAll(uploadDir, 0755)
+	if _, err := os.Stat(UPLOAD_DIR); os.IsNotExist(err) {
+		os.MkdirAll(UPLOAD_DIR, 0755)
 	}
 
 	fileName := fmt.Sprintf("%d%s", time.Now().UnixNano(), fileExtension)
-	filePath := filepath.Join(uploadDir, fileName)
+	filePath := filepath.Join(UPLOAD_DIR, fileName)
 
 	dst, err := os.Create(filePath)
 	if err != nil {

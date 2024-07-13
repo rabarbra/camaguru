@@ -3,15 +3,13 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
 
 	_ "github.com/lib/pq"
 )
-
-var JWT_SECRET = os.Getenv("JWT_SECRET")
 
 func migrate(db *sql.DB) {
 	sqlFile, err := os.Open("./assets/migrations/01_create_tables.up.sql")
@@ -20,7 +18,7 @@ func migrate(db *sql.DB) {
 	}
 	defer sqlFile.Close()
 
-	sqlBytes, err := ioutil.ReadAll(sqlFile)
+	sqlBytes, err := io.ReadAll(sqlFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -53,6 +51,8 @@ func main() {
 	http.HandleFunc("/me", CorsM(AuthDBM(db, getUser)))
 	http.HandleFunc("POST /me", CorsM(DBM(db, postUser)))
 	http.HandleFunc("PUT /me", CorsM(AuthDBM(db, putUser)))
+
+	http.HandleFunc("/verify", CorsM(DBM(db, verifyEmail)))
 
 	http.HandleFunc("/img", CorsM(AuthDBM(db, getImg)))
 	http.HandleFunc("POST /img", CorsM(AuthDBM(db, postImg)))

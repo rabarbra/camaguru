@@ -3,14 +3,71 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"jwt"
 	"log"
 	"net/http"
+	"net/smtp"
+	"time"
 )
 
 type LoginReq struct {
 	Username string `json:"username"`
 	Pass     string `json:"pass"`
+}
+
+func verifyEmail(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	token := r.URL.Query().Get("token")
+	if token == "" {
+		http.Redirect(w, r, EMAIL_VERIFIED_REDIR_URL+"?err=token invalid", http.StatusFound)
+		return
+	}
+	p, err := jwt.VerifyJWT(token, JWT_SECRET)
+	if err != nil {
+		log.Println(err)
+		http.Redirect(w, r, EMAIL_VERIFIED_REDIR_URL+"?err=token invalid", http.StatusFound)
+		return
+	}
+	if time.Now().Unix() > p.Exp {
+		http.Redirect(w, r, EMAIL_VERIFIED_REDIR_URL+"?err=token expired", http.StatusFound)
+		return
+	}
+	user, err := getUserById(db, p.Id)
+	if err != nil {
+		log.Println(err)
+		http.Redirect(w, r, EMAIL_VERIFIED_REDIR_URL+"?err=error getting user", http.StatusFound)
+		return
+	}
+	user.EmailVerified = true
+	err = updateUser(db, user)
+	if err != nil {
+		log.Println(err)
+		http.Redirect(w, r, EMAIL_VERIFIED_REDIR_URL+"?err=error updating user", http.StatusFound)
+		return
+	}
+	http.Redirect(w, r, EMAIL_VERIFIED_REDIR_URL, http.StatusFound)
+}
+
+func sendVerificationEmail(email string, db *sql.DB) error {
+	verifyLink := BACKEND_HOST + "/verify?token="
+	user, err := getUserByEmail(db, email)
+	if err != nil {
+		return err
+	}
+	token, err := jwt.CreateJWT(JWT_SECRET, user.Id, time.Hour*100)
+	if err != nil {
+		return err
+	}
+	verifyLink += token
+	msg := []byte(fmt.Sprintf("To: %s\r\nSubject: %s\r\n\r\nConfirm email: %s\r\n",
+		email, "Confirm email", verifyLink))
+	auth := smtp.PlainAuth("", SMTP_FROM, SMTP_PASSWORD, SMTP_HOST)
+	err = smtp.SendMail(SMTP_HOST+":"+SMTP_PORT, auth, SMTP_FROM, []string{email}, msg)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
 }
 
 func signin(w http.ResponseWriter, r *http.Request, db *sql.DB) {
@@ -36,8 +93,13 @@ func signin(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
+	if !user.EmailVerified {
+		sendError(w, http.StatusBadRequest, "please, verify your email")
+		return
+	}
+
 	if CheckPassHash(req.Pass, user.Pass) {
-		token, er := jwt.CreateJWT(JWT_SECRET, user.Id)
+		token, er := jwt.CreateJWT(JWT_SECRET, user.Id, time.Hour*24)
 		if er != nil {
 			sendError(w, http.StatusInternalServerError, "cannot create token")
 			return
@@ -105,6 +167,7 @@ func postUser(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
+	sendVerificationEmail(u.Email, db)
 	sendJson(w, http.StatusCreated, map[string]string{"message": "User created successfully"})
 }
 

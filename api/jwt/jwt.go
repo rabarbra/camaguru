@@ -36,7 +36,7 @@ func signMessage(message, secret string) string {
 	return base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
 }
 
-func CreateJWT(secret string, id int64) (string, error) {
+func CreateJWT(secret string, id int64, exp time.Duration) (string, error) {
 	header := Header{
 		Alg: "HS256",
 		Typ: "JWT",
@@ -46,7 +46,7 @@ func CreateJWT(secret string, id int64) (string, error) {
 		Sub: "1234567890",
 		Id:  id,
 		Iat: time.Now().Unix(),
-		Exp: time.Now().Add(time.Hour * 24).Unix(),
+		Exp: time.Now().Add(exp).Unix(),
 	}
 
 	encodedHeader, err := base64URLEncode(header)
