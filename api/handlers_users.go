@@ -64,7 +64,7 @@ func postUser(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 
 	sendVerificationEmail(u.Email, db)
-	sendJson(w, http.StatusCreated, map[string]string{"message": "User created successfully"})
+	sendJson(w, http.StatusCreated, map[string]string{"msg": "User created successfully"})
 }
 
 func getUser(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
@@ -102,5 +102,5 @@ func putUser(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
 		sendError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	sendJson(w, http.StatusOK, map[string]string{"message": "User updated successfully"})
+	sendJson(w, http.StatusOK, map[string]string{"msg": "User updated successfully"})
 }

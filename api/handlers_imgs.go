@@ -64,7 +64,7 @@ func postImg(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
 		sendError(w, http.StatusInternalServerError, "Failed to save file information to database.")
 	}
 
-	sendJson(w, http.StatusCreated, map[string]string{"message": "Img created successfully"})
+	sendJson(w, http.StatusCreated, map[string]string{"msg": "Img created successfully"})
 }
 
 func getImg(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {

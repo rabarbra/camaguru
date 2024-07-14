@@ -1,10 +1,13 @@
 import ftReact from "@rabarbra/ft_react";
 import { apiClient } from "../api/api_client";
 import { API_ENDPOINT } from "../config";
+import Alert from "../components/alert";
+import Msg from "../components/msg";
 
 const Profile = (props) => {
     const me = JSON.parse(localStorage.getItem("me"));
     const [err, setErr] = ftReact.useState("");
+    const [msg, setMsg] = ftReact.useState("");
     return (
         <div className="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
             <form
@@ -25,17 +28,12 @@ const Profile = (props) => {
                         data.pass = pass
                     }
                     const res = await apiClient.put('me', data);
-                    if (res.ok === "true")
-                        props.route("/me");
+                    if (res.msg)
+                        setMsg(res.msg)
                     else if (res.err)
                         setErr(res.err);
                 }}
             >
-`                {err && 
-                    <div role="alert" className="alert alert-error">
-                        <span>{err}</span>
-                    </div>
-                }
                 <div className="form-control">
                     <label className="label">
                     <span className="label-text">Username</span>
@@ -56,7 +54,9 @@ const Profile = (props) => {
                 </div>
                 <div className="form-control mt-6">
                     <button type="submit" className="btn btn-primary">Update Profile</button>
-                </div>`
+                </div>
+                {err && <Alert msg={err}/>}
+                {msg && <Msg msg={msg}/>}
             </form>
         </div>
     )

@@ -1,5 +1,7 @@
 import ftReact from "@rabarbra/ft_react";
 import { apiClient } from "../api/api_client";
+import Alert from "../components/alert";
+import Msg from "../components/msg";
 
 const Reset = (props) => {
     const [err, setErr] = ftReact.useState("");
@@ -37,15 +39,9 @@ const Reset = (props) => {
                             setRes(res.msg);
                     }}
                 >
-                    {err && 
-                        <div role="alert" className="alert alert-error">
-                            <span>{err}</span>
-                        </div>
-                    }
+                    {err && <Alert msg={err}/>}
                     {res ? 
-                        <div role="alert" className="alert alert-success">
-                            <span>{res}</span>
-                        </div>
+                        <Msg msg={res}/>
                         : <div>
                             <div className="form-control">
                                 <label className="label">
@@ -78,19 +74,11 @@ const Reset = (props) => {
                     }
                 }}
             >
-            {err && 
-                <div role="alert" className="alert alert-error">
-                    <span>{err}</span>
-                </div>
-            }
-            {res && 
-                <div role="alert" className="alert alert-success">
-                    <span>{res}</span>
-                </div>
-            }
+            {err && <Alert msg={err}/>}
+            {res && <Msg msg={res}/>}
             <div className="form-control">
                 <label className="label">
-                <span className="label-text"> New password</span>
+                <span className="label-text">New password</span>
                 </label>
                 <input type="password" placeholder="password" className="input input-bordered" required />
             </div>
