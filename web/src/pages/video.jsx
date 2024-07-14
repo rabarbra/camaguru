@@ -99,6 +99,18 @@ const Video = (props) => {
                 onClick={async () => {
                     const formData = new FormData();
                     const canvas = document.getElementById("canvas");
+                    const context = canvas.getContext("2d");
+                    context.filter = `
+                        hue-rotate(${hue}deg)
+                        saturate(${sat}%)
+                        sepia(${sep}%)
+                        invert(${inv}%)
+                        grayscale(${gray}%)
+                        contrast(${cntr}%)
+                        brightness(${brt}%)
+                    `
+                    const video = document.getElementById("video");
+                    context.drawImage(video, 0, 0, constraints.video.width, constraints.video.height);
                     await canvas.toBlob(async (blob)=>{
                         formData.append('file', blob, 'photo.png');
                         const resp = await apiClient.post(
