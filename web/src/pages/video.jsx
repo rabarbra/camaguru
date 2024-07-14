@@ -1,5 +1,7 @@
 import ftReact from "@rabarbra/ft_react";
 import { apiClient } from "../api/api_client";
+import Msg from "../components/msg";
+import Alert from "../components/alert";
 
 const constraints = {
     audio: false,
@@ -7,6 +9,8 @@ const constraints = {
 };
 
 const Video = (props) => {
+    const [err, setErr] = ftReact.useState("");
+    const [msg, setMsg] = ftReact.useState("");
     const [sat, setSat] = ftReact.useState(100);
     const [cntr, setCntr] = ftReact.useState(100);
     const [brt, setBrt] = ftReact.useState(100);
@@ -67,6 +71,9 @@ const Video = (props) => {
                         // const photo = document.getElementById("photo");
                         const video = document.getElementById("video");
                         const context = canvas.getContext("2d");
+                        context.fillStyle = "#AAA";
+                        context.filter = "none";
+                        context.fillRect(0, 0, canvas.width, canvas.height);
                         context.drawImage(video, 0, 0, constraints.video.width, constraints.video.height);
                         const data = canvas.toDataURL("image/png");
                         setData(data);
@@ -109,19 +116,26 @@ const Video = (props) => {
                         contrast(${cntr}%)
                         brightness(${brt}%)
                     `
-                    const video = document.getElementById("video");
-                    context.drawImage(video, 0, 0, constraints.video.width, constraints.video.height);
+                    const source = video ? document.getElementById("video") : document.getElementById("photo");
+                    context.drawImage(source, 0, 0, constraints.video.width, constraints.video.height);
                     await canvas.toBlob(async (blob)=>{
                         formData.append('file', blob, 'photo.png');
                         const resp = await apiClient.post(
                             'img',
                             formData,
-                        )
-                        console.log(resp);
-
-                    }, "image/png")
+                        );
+                        if (resp.err)
+                            setErr(resp.err);
+                        else if (resp.msg)
+                            setMsg(resp.msg);
+                    }, "image/png");
+                    context.fillStyle = "#AAA";
+                    context.filter = "none";
+                    context.fillRect(0, 0, canvas.width, canvas.height);
                 }}
             >Send</button>
+            {msg && <Msg msg={msg}/>}
+            {err && <Alert msg={err}/>}
         </div>
     );
 };
