@@ -85,22 +85,25 @@ const Video = (props) => {
                 }}
                 className="btn btn-primary"
             >{video ? "Take photo" : "Camera"}</button>
-            <div>
-                <label>Saturation: {sat}%</label>
-                <input type="range" min={0} max={200} value={sat} className="range  range-xs" onInput={(ev)=>setSat(ev.target.value)} />
-                <label>Hue: {hue || "0"} deg</label>
-                <input type="range" min={-180} max={180} value={hue} className="range range-xs" onInput={(ev)=>setHue(ev.target.value)} />
-                <label>Contrast: {cntr}%</label>
-                <input type="range" min={0} max={200} value={cntr} className="range range-xs" onInput={(ev)=>setCntr(ev.target.value)} />
-                <label>Brightness: {brt}%</label>
-                <input type="range" min={0} max={200} value={brt} className="range range-xs" onInput={(ev)=>setBrt(ev.target.value)} />
-                <label>Sepia: {sep || "0"}%</label>
-                <input type="range" min={0} max={100} value={sep} className="range range-xs" onInput={(ev)=>setSep(ev.target.value)} />
-                <label>Invert: {inv || "0"}%</label>
-                <input type="range" min={0} max={100} value={inv} className="range range-xs" onInput={(ev)=>setInv(ev.target.value)} />
-                <label>Grayscale: {gray || "0"}%</label>
-                <input type="range" min={0} max={100} value={gray} className="range range-xs" onInput={(ev)=>setGray(ev.target.value)} />
-            </div>
+            <details className="collapse bg-base-200">
+                <summary className="collapse-title text-xl font-medium">Show filters</summary>
+                <div className="collapse-content">    
+                    <label>Saturation: {sat}%</label>
+                    <input type="range" min={0} max={200} value={sat} className="range  range-xs" onInput={(ev)=>setSat(ev.target.value)} />
+                    <label>Hue: {hue || "0"} deg</label>
+                    <input type="range" min={-180} max={180} value={hue} className="range range-xs" onInput={(ev)=>setHue(ev.target.value)} />
+                    <label>Contrast: {cntr}%</label>
+                    <input type="range" min={0} max={200} value={cntr} className="range range-xs" onInput={(ev)=>setCntr(ev.target.value)} />
+                    <label>Brightness: {brt}%</label>
+                    <input type="range" min={0} max={200} value={brt} className="range range-xs" onInput={(ev)=>setBrt(ev.target.value)} />
+                    <label>Sepia: {sep || "0"}%</label>
+                    <input type="range" min={0} max={100} value={sep} className="range range-xs" onInput={(ev)=>setSep(ev.target.value)} />
+                    <label>Invert: {inv || "0"}%</label>
+                    <input type="range" min={0} max={100} value={inv} className="range range-xs" onInput={(ev)=>setInv(ev.target.value)} />
+                    <label>Grayscale: {gray || "0"}%</label>
+                    <input type="range" min={0} max={100} value={gray} className="range range-xs" onInput={(ev)=>setGray(ev.target.value)} />
+                </div>
+            </details>
             <button
                 className="btn btn-primary"
                 onClick={async () => {

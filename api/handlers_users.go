@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func checkUser(db *sql.DB, u User) string {
@@ -103,4 +104,27 @@ func putUser(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
 		return
 	}
 	sendJson(w, http.StatusOK, map[string]string{"msg": "User updated successfully"})
+}
+
+func postUserAvatar(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
+	u, err := getUserById(db, userId)
+	if err != nil {
+		log.Println(err)
+		sendError(w, http.StatusBadRequest, "no such user")
+		return
+	}
+	filePath, err := uploadImg(r)
+	if err != nil {
+		log.Println(err)
+		sendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	u.Avatar = strings.TrimPrefix(filePath, "assets")
+	err = updateUser(db, u)
+	if err != nil {
+		log.Println(err)
+		sendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	sendJson(w, http.StatusOK, map[string]string{"msg": "Avatar updated successfully"})
 }

@@ -46,6 +46,7 @@ func main() {
 	defer db.Close()
 	migrate(db)
 
+	http.HandleFunc("/me/avatar", CorsM(AuthDBM(db, postUserAvatar)))
 	http.HandleFunc("/me", CorsM(AuthDBM(db, getUser)))
 	http.HandleFunc("POST /me", CorsM(DBM(db, postUser)))
 	http.HandleFunc("PUT /me", CorsM(AuthDBM(db, putUser)))

@@ -3,6 +3,7 @@ import { apiClient } from "../api/api_client";
 import { API_ENDPOINT } from "../config";
 import Alert from "../components/alert";
 import Msg from "../components/msg";
+import ImgInput from "../components/image-imput";
 
 const Profile = (props) => {
     const me = JSON.parse(localStorage.getItem("me"));
@@ -10,6 +11,7 @@ const Profile = (props) => {
     const [msg, setMsg] = ftReact.useState("");
     return (
         <div className="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
+            <ImgInput endpoint="me/avatar"/>
             <form
                 className="card-body"
                 onSubmit={async (ev)=> {

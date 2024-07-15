@@ -35,7 +35,6 @@ class ApiClient {
     // if (!path.startsWith('/'))
     //   path = '/' + path;
     const url = new URL(this.baseUrl + path);
-    console.log(url)
     let params = {
       method,
       headers: {...this.headers, ...headers},

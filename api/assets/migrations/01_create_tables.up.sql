@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS users
     username        VARCHAR(50) NOT NULL UNIQUE,
     email           VARCHAR(50) NOT NULL UNIQUE,
     pass            VARCHAR(100) NOT NULL,
+    avatar          VARCHAR(500),
     email_verified  BOOLEAN DEFAULT FALSE,
     like_notify     BOOLEAN DEFAULT TRUE,
     comm_notify     BOOLEAN DEFAULT TRUE,

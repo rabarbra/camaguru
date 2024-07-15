@@ -3,67 +3,24 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
-	"log"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
-	"time"
+	"strings"
 )
 
 func postImg(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
-	if err := r.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
-		log.Println(err, MAX_UPLOAD_SIZE)
-		sendError(w, http.StatusBadRequest, "The uploaded file is too big.")
-		return
-	}
-
-	file, fileHeader, err := r.FormFile("file")
+	filePath, err := uploadImg(r)
 	if err != nil {
-		log.Println(file, err)
-		sendError(w, http.StatusBadRequest, "Couldn't retrieve file.")
+		sendError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	defer file.Close()
-
-	fileExtension := filepath.Ext(fileHeader.Filename)
-	if fileExtension != ".jpg" && fileExtension != ".jpeg" && fileExtension != ".png" {
-		sendError(w, http.StatusBadRequest, "The provided file format is not allowed. Please upload a JPEG or PNG image.")
-		return
-	}
-
-	if _, err := os.Stat(UPLOAD_DIR); os.IsNotExist(err) {
-		os.MkdirAll(UPLOAD_DIR, 0755)
-	}
-
-	fileName := fmt.Sprintf("%d%s", time.Now().UnixNano(), fileExtension)
-	filePath := filepath.Join(UPLOAD_DIR, fileName)
-
-	dst, err := os.Create(filePath)
-	if err != nil {
-		sendError(w, http.StatusInternalServerError, "Unable to create the file for writing. Check your write access privilege.")
-		return
-	}
-	defer dst.Close()
-
-	if _, err := file.Seek(0, 0); err != nil {
-		sendError(w, http.StatusInternalServerError, "Unable to read the file.")
-		return
-	}
-	if _, err := dst.ReadFrom(file); err != nil {
-		sendError(w, http.StatusInternalServerError, "Unable to save the file.")
-		return
-	}
-
 	var img Img
-	img.Link = filePath
+	img.Link = strings.TrimPrefix(filePath, "assets")
 	img.UserId = userId
 	err = createImg(db, img)
 	if err != nil {
 		sendError(w, http.StatusInternalServerError, "Failed to save file information to database.")
 	}
-
 	sendJson(w, http.StatusCreated, map[string]string{"msg": "Img created successfully"})
 }
 

@@ -5,6 +5,7 @@ type User struct {
 	Username      string `json:"username"`
 	Email         string `json:"email"`
 	Pass          string `json:"pass"`
+	Avatar        string `json:"avatar"`
 	EmailVerified bool   `json:"email_verified"`
 	LikeNotify    bool   `json:"like_notify"`
 	CommNotify    bool   `json:"comm_notify"`
