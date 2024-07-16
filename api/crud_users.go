@@ -65,7 +65,7 @@ func getUserByUsename(db *sql.DB, username string) (User, error) {
 func getUserByEmail(db *sql.DB, email string) (User, error) {
 	var user User
 	err := db.QueryRow(fmt.Sprintf(
-		"SELECT id, username, email, pass, avatar email_verified, like_notify, comm_notify FROM users WHERE email='%s'",
+		"SELECT id, username, email, pass, avatar, email_verified, like_notify, comm_notify FROM users WHERE email='%s'",
 		email,
 	)).Scan(&user.Id, &user.Username, &user.Email, &user.Pass, &user.Avatar, &user.EmailVerified, &user.LikeNotify, &user.CommNotify)
 	return user, err

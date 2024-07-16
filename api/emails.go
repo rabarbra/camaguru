@@ -21,6 +21,7 @@ func sendVerificationEmail(email string, db *sql.DB) error {
 	verifyLink := BACKEND_HOST + "/auth/verify?token="
 	user, err := getUserByEmail(db, email)
 	if err != nil {
+		log.Println("sendVerificationEmail: " + err.Error())
 		return err
 	}
 	token, err := jwt.CreateJWT(JWT_SECRET, user.Id, time.Hour*100)

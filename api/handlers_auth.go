@@ -37,7 +37,9 @@ func verifyEmail(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		)
 		return
 	}
-	user, err := getUserById(db, p.Id)
+	var user User
+	err = get(&user, db, p.Id)
+	// user, err := getUserById(db, p.Id)
 	if err != nil {
 		log.Println(err)
 		http.Redirect(

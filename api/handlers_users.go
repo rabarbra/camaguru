@@ -57,19 +57,27 @@ func postUser(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	u.Pass = hash
 
-	err := createUser(db, u)
+	err := create(u, db)
+	// err := createUser(db, u)
 	if err != nil {
 		log.Println("Error inserting user:", err)
 		sendError(w, http.StatusBadRequest, "error creating user")
 		return
 	}
 
-	sendVerificationEmail(u.Email, db)
+	err = sendVerificationEmail(u.Email, db)
+	if err != nil {
+		log.Println(err)
+		sendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 	sendJson(w, http.StatusCreated, map[string]string{"msg": "User created successfully"})
 }
 
 func getUser(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
-	user, err := getUserById(db, userId)
+	var user User
+	err := get(&user, db, userId)
+	// user, err := getUserById(db, userId)
 	if err != nil {
 		sendError(w, http.StatusBadRequest, "user not found")
 		return
