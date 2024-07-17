@@ -85,3 +85,90 @@ func get[T any](r *T, db *sql.DB, id int64) error {
 	err := db.QueryRow(sqlReq).Scan(Fields(r)...)
 	return err
 }
+
+type FilterOperation string
+
+const (
+	OpEqual        FilterOperation = "="
+	OpNotEqual     FilterOperation = "!="
+	OpGreaterThan  FilterOperation = ">"
+	OpLessThan     FilterOperation = "<"
+	OpGreaterEqual FilterOperation = ">="
+	OpLessEqual    FilterOperation = "<="
+)
+
+type Filter struct {
+	Key       string
+	Value     any
+	Operation FilterOperation
+}
+
+type OrderDirection string
+
+const (
+	ASC  OrderDirection = "ASC"
+	DESC OrderDirection = "DESC"
+)
+
+type Order struct {
+	Key       string
+	Direction OrderDirection
+}
+
+type Pagination struct {
+	limit  int
+	offset int
+}
+
+func buildPagination(pag Pagination) string {
+	return fmt.Sprintf(" LIMIT %d OFFSET %d", pag.limit, pag.offset)
+}
+
+func buildQuery(baseQuery string, filters []Filter) (string, []interface{}) {
+	var whereClauses []string
+	var args []interface{}
+
+	for i, filter := range filters {
+		whereClauses = append(whereClauses, fmt.Sprintf("%s %s $%d", filter.Key, filter.Operation, i+1))
+		args = append(args, filter.Value)
+	}
+
+	query := baseQuery
+	if len(whereClauses) > 0 {
+		query += " WHERE " + strings.Join(whereClauses, " AND ")
+	}
+
+	return query, args
+}
+
+func getMany[T any](r *[]T, db *sql.DB, filters []Filter, pag Pagination) error {
+	tableName := ToSnakeCase(reflect.TypeOf(r).Elem().Name()) + "s"
+	sqlReq := "SELECT "
+	values := reflect.ValueOf(r).Elem()
+	types := values.Type()
+	for i := 0; i < values.NumField(); i++ {
+		sqlReq += ToSnakeCase(types.Field(i).Name)
+		if i < values.NumField()-1 {
+			sqlReq += ", "
+		} else {
+			sqlReq += " "
+		}
+	}
+	sqlReq += fmt.Sprintf("FROM %s", tableName)
+	query, args := buildQuery(sqlReq, filters)
+	query += buildPagination(pag)
+
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var item T
+		if err := rows.Scan(Fields(item)...); err != nil {
+			return err
+		}
+		*r = append(*r, item)
+	}
+	return nil
+}
