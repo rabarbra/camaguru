@@ -1,5 +1,14 @@
 package main
 
+import (
+	"net/http"
+	"strings"
+)
+
+type BaseModel interface {
+	NewItem(r *http.Request, userId int64) error
+}
+
 type User struct {
 	Id            int64  `json:"id"`
 	Username      string `json:"username"`
@@ -16,6 +25,16 @@ type Img struct {
 	Link      string `json:"link"`
 	UserId    int64  `json:"user_id"`
 	CreatedAt string `json:"created_at"`
+}
+
+func (i *Img) NewItem(r *http.Request, userId int64) error {
+	filePath, err := uploadImg(r)
+	if err != nil {
+		return err
+	}
+	i.Link = strings.TrimPrefix(filePath, "assets")
+	i.UserId = userId
+	return nil
 }
 
 type Comment struct {

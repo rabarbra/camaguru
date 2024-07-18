@@ -57,7 +57,7 @@ func postUser(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	u.Pass = hash
 
-	err := create(u, db)
+	_, err := create(u, db)
 	// err := createUser(db, u)
 	if err != nil {
 		log.Println("Error inserting user:", err)

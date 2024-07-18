@@ -17,18 +17,19 @@ func congigureCors(w *http.ResponseWriter, r *http.Request) bool {
 	(*w).Header().Set(
 		"Access-Control-Allow-Headers",
 		`	Access-Control-Allow-Headers,
-			Origin,Accept,
-			X-Requested-With,
-			Content-Type,
-			Access-Control-Request-Method,
-			Access-Control-Request-Headers,
-			Authorization
+		Origin,Accept,
+		X-Requested-With,
+		Content-Type,
+		Access-Control-Request-Method,
+		Access-Control-Request-Headers,
+		Authorization
 		`,
 	)
 	if r.Method == "OPTIONS" {
 		(*w).WriteHeader(http.StatusOK)
 		return true
 	}
+	(*w).Header().Set("Content-Type", "application/json")
 	return false
 }
 

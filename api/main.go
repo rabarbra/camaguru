@@ -56,9 +56,9 @@ func main() {
 	http.HandleFunc("/auth/pass", CorsM(DBM(db, resetPasswordUnauth)))
 	http.HandleFunc("/auth/reset", CorsM(AuthDBM(db, resetPassword)))
 
-	http.HandleFunc("/img", CorsM(AuthDBM(db, getImg)))
-	http.HandleFunc("POST /img", CorsM(AuthDBM(db, postImg)))
-	// http.HandleFunc("/img/{id}", CorsM(DBM(db, getImg)))
+	// AddCrudRoutes(&Img{}, db)
+	// AddCrudRoutes(&Like{}, db)
+	// AddCrudRoutes(&Comment{}, db)
 
 	fs := http.FileServer(http.Dir("./assets/static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))

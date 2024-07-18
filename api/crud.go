@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"reflect"
 	"regexp"
 	"strings"
@@ -18,7 +17,7 @@ func ToSnakeCase(str string) string {
 	return strings.ToLower(snake)
 }
 
-func create(r any, db *sql.DB) error {
+func create(r any, db *sql.DB) (int64, error) {
 	tableName := ToSnakeCase(reflect.TypeOf(r).Name()) + "s"
 	sqlReq := "INSERT INTO " + tableName + "("
 	sqlValues := "VALUES("
@@ -44,12 +43,12 @@ func create(r any, db *sql.DB) error {
 			sqlValues += ", "
 		} else {
 			sqlReq += ") "
-			sqlValues += ");"
+			sqlValues += ") RETURNING id;"
 		}
 	}
-	res, err := db.Exec(sqlReq + sqlValues)
-	log.Println(res, err)
-	return err
+	var newId int64
+	err := db.QueryRow(sqlReq + sqlValues).Scan(&newId)
+	return newId, err
 }
 
 func delete(r any, db *sql.DB, id int64) error {
