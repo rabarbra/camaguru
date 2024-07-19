@@ -3,10 +3,11 @@ package main
 import (
 	"net/http"
 	"strings"
+	"time"
 )
 
 type BaseModel interface {
-	NewItem(r *http.Request, userId int64) error
+	NewItem(r *http.Request, userId int64) (BaseModel, error)
 }
 
 type User struct {
@@ -27,14 +28,15 @@ type Img struct {
 	CreatedAt string `json:"created_at"`
 }
 
-func (i *Img) NewItem(r *http.Request, userId int64) error {
+func (i Img) NewItem(r *http.Request, userId int64) (BaseModel, error) {
 	filePath, err := uploadImg(r)
 	if err != nil {
-		return err
+		return i, err
 	}
 	i.Link = strings.TrimPrefix(filePath, "assets")
 	i.UserId = userId
-	return nil
+	i.CreatedAt = time.Now().Format(time.RFC3339)
+	return i, nil
 }
 
 type Comment struct {

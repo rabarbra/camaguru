@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-func handleRequest(model *BaseModel) ProtectedDBRequestHandler {
+func handleRequest(model BaseModel) ProtectedDBRequestHandler {
 	return func(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
 		switch r.Method {
 		// case http.MethodGet:
@@ -20,7 +20,7 @@ func handleRequest(model *BaseModel) ProtectedDBRequestHandler {
 	}
 }
 
-func handleRequestId(model *BaseModel) ProtectedDBRequestHandler {
+func handleRequestId(model BaseModel) ProtectedDBRequestHandler {
 	return func(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
 		id, err := strconv.ParseInt(r.PathValue("id"), 10, 0)
 		if err != nil || id < 1 {
@@ -42,8 +42,8 @@ func handleRequestId(model *BaseModel) ProtectedDBRequestHandler {
 	}
 }
 
-func AddCrudRoutes(model *BaseModel, db *sql.DB) {
-	routeName := ToSnakeCase(reflect.TypeOf(model).Elem().Name())
+func AddCrudRoutes(model BaseModel, db *sql.DB) {
+	routeName := ToSnakeCase(reflect.TypeOf(model).Name())
 	handler := CorsM(AuthDBM(db, handleRequest(model)))
 	handlerId := CorsM(AuthDBM(db, handleRequestId(model)))
 	http.HandleFunc("/"+routeName, handler)

@@ -17,7 +17,7 @@ func ToSnakeCase(str string) string {
 	return strings.ToLower(snake)
 }
 
-func create(r any, db *sql.DB) (int64, error) {
+func create[T any](r T, db *sql.DB) (int64, error) {
 	tableName := ToSnakeCase(reflect.TypeOf(r).Name()) + "s"
 	sqlReq := "INSERT INTO " + tableName + "("
 	sqlValues := "VALUES("

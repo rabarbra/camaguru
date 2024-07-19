@@ -56,7 +56,7 @@ func main() {
 	http.HandleFunc("/auth/pass", CorsM(DBM(db, resetPasswordUnauth)))
 	http.HandleFunc("/auth/reset", CorsM(AuthDBM(db, resetPassword)))
 
-	// AddCrudRoutes(&Img{}, db)
+	AddCrudRoutes(Img{}, db)
 	// AddCrudRoutes(&Like{}, db)
 	// AddCrudRoutes(&Comment{}, db)
 
