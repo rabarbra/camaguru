@@ -14,7 +14,7 @@ type User struct {
 	Id            int64  `json:"id"`
 	Username      string `json:"username"`
 	Email         string `json:"email"`
-	Pass          string `json:"pass"`
+	Pass          string `json:"-"`
 	Avatar        string `json:"avatar"`
 	EmailVerified bool   `json:"email_verified"`
 	LikeNotify    bool   `json:"like_notify"`

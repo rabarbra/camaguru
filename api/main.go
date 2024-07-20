@@ -38,6 +38,10 @@ func main() {
 		os.Getenv("POSTGRES_HOST"),
 		os.Getenv("POSTGRES_DB"),
 	)
+	// var o orm.Orm
+	// o.Connect(connString)
+	// defer o.Close()
+	// o.Migrate("./assets/migrations/01_create_tables.up.sql")
 	db, err := sql.Open("postgres", connString)
 	if err != nil {
 		log.Println(err)
