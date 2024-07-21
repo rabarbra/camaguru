@@ -1,15 +1,15 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"jwt"
 	"log"
 	"net/http"
+	"orm"
 	"time"
 )
 
-func verifyEmail(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+func verifyEmail(w http.ResponseWriter, r *http.Request, db *orm.Orm) {
 	token := r.URL.Query().Get("token")
 	if token == "" {
 		http.Redirect(
@@ -38,8 +38,7 @@ func verifyEmail(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 	var user User
-	err = get(&user, db, p.Id)
-	// user, err := getUserById(db, p.Id)
+	err = db.GetOneById(&user, p.Id)
 	if err != nil {
 		log.Println(err)
 		http.Redirect(
@@ -50,7 +49,7 @@ func verifyEmail(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 	user.EmailVerified = true
-	err = updateUser(db, user)
+	err = db.Update(&user, user.BaseModel.Id)
 	if err != nil {
 		log.Println(err)
 		http.Redirect(
@@ -60,7 +59,7 @@ func verifyEmail(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		)
 		return
 	}
-	accessToken, err := jwt.CreateJWT(JWT_SECRET, user.Id, time.Hour*24)
+	accessToken, err := jwt.CreateJWT(JWT_SECRET, user.BaseModel.Id, time.Hour*24)
 	if err != nil {
 		log.Println(err)
 		http.Redirect(
@@ -81,7 +80,7 @@ type resetPasswordReq struct {
 	Pass string `json:"pass"`
 }
 
-func resetPassword(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
+func resetPassword(w http.ResponseWriter, r *http.Request, userId int64, db *orm.Orm) {
 	var req resetPasswordReq
 	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 	dec := json.NewDecoder(r.Body)
@@ -93,7 +92,8 @@ func resetPassword(w http.ResponseWriter, r *http.Request, userId int64, db *sql
 		sendError(w, http.StatusBadRequest, "password required")
 		return
 	}
-	user, err := getUserById(db, userId)
+	var user User
+	err := db.GetOneById(&user, userId)
 	if err != nil {
 		sendError(w, http.StatusBadRequest, "no such user")
 		return
@@ -108,7 +108,7 @@ func resetPassword(w http.ResponseWriter, r *http.Request, userId int64, db *sql
 	}
 
 	user.Pass = hash
-	err = updateUser(db, user)
+	err = db.Update(&user, userId)
 	if err != nil {
 		sendError(w, http.StatusBadRequest, "error updating user")
 		return
@@ -120,7 +120,7 @@ type resetPasswordUnauthReq struct {
 	Email string `json:"email"`
 }
 
-func resetPasswordUnauth(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+func resetPasswordUnauth(w http.ResponseWriter, r *http.Request, db *orm.Orm) {
 	var req resetPasswordUnauthReq
 	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 	dec := json.NewDecoder(r.Body)
@@ -132,7 +132,8 @@ func resetPasswordUnauth(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		sendError(w, http.StatusBadRequest, "email required")
 		return
 	}
-	user, err := getUserByEmail(db, req.Email)
+	var user User
+	err := db.GetOne(&user, []orm.Filter{{Key: "email", Value: req.Email, Operation: "="}})
 	if err != nil {
 		sendError(w, http.StatusBadRequest, "no such user")
 		return
@@ -150,7 +151,7 @@ type LoginReq struct {
 	Pass     string `json:"pass"`
 }
 
-func signin(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+func signin(w http.ResponseWriter, r *http.Request, db *orm.Orm) {
 	var req LoginReq
 	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 	dec := json.NewDecoder(r.Body)
@@ -167,7 +168,8 @@ func signin(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	user, err := getUserByUsename(db, req.Username)
+	var user User
+	err := db.GetOne(&user, []orm.Filter{{Key: "username", Value: req.Username, Operation: "="}})
 	if err != nil {
 		sendError(w, http.StatusBadRequest, "no such user")
 		return
@@ -179,7 +181,7 @@ func signin(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 
 	if CheckPassHash(req.Pass, user.Pass) {
-		token, er := jwt.CreateJWT(JWT_SECRET, user.Id, time.Hour*24)
+		token, er := jwt.CreateJWT(JWT_SECRET, user.BaseModel.Id, time.Hour*24)
 		log.Println(er)
 		if er != nil {
 			sendError(w, http.StatusInternalServerError, "cannot create token")

@@ -2,12 +2,12 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
 	"fmt"
 	"html/template"
 	"jwt"
 	"log"
 	"net/smtp"
+	"orm"
 	"strings"
 	"time"
 )
@@ -17,14 +17,15 @@ type EmailData struct {
 	Link     string
 }
 
-func sendVerificationEmail(email string, db *sql.DB) error {
+func sendVerificationEmail(email string, db *orm.Orm) error {
 	verifyLink := BACKEND_HOST + "/auth/verify?token="
-	user, err := getUserByEmail(db, email)
+	var user User
+	err := db.GetOne(&user, []orm.Filter{{Key: "email", Value: email, Operation: "="}})
 	if err != nil {
 		log.Println("sendVerificationEmail: " + err.Error())
 		return err
 	}
-	token, err := jwt.CreateJWT(JWT_SECRET, user.Id, time.Hour*100)
+	token, err := jwt.CreateJWT(JWT_SECRET, user.BaseModel.Id, time.Hour*100)
 	if err != nil {
 		return err
 	}
@@ -70,13 +71,14 @@ func sendVerificationEmail(email string, db *sql.DB) error {
 	return nil
 }
 
-func sendResetPasswordEmail(email string, db *sql.DB) error {
+func sendResetPasswordEmail(email string, db *orm.Orm) error {
 	verifyLink := FRONTEND_HOST + "/reset?token="
-	user, err := getUserByEmail(db, email)
+	var user User
+	err := db.GetOne(&user, []orm.Filter{{Key: "email", Value: email, Operation: "="}})
 	if err != nil {
 		return err
 	}
-	token, err := jwt.CreateJWT(JWT_SECRET, user.Id, time.Hour*3)
+	token, err := jwt.CreateJWT(JWT_SECRET, user.BaseModel.Id, time.Hour*3)
 	if err != nil {
 		return err
 	}

@@ -29,7 +29,12 @@ func PrintSlice(values []any, separator string) string {
 }
 
 func ToSQL(val any) string {
-	v := reflect.ValueOf(val)
+	var v reflect.Value
+	if rv, ok := val.(reflect.Value); ok {
+		v = rv
+	} else {
+		v = reflect.ValueOf(val)
+	}
 	switch v.Kind() {
 	case reflect.Bool:
 		return fmt.Sprintf("%t", val)
@@ -40,7 +45,11 @@ func ToSQL(val any) string {
 	case reflect.String:
 		return fmt.Sprintf("'%s'", val)
 	case reflect.Slice:
-		return fmt.Sprintf("(%s)", PrintSlice(val.([]any), ", "))
+		slice := make([]any, v.Len())
+		for i := 0; i < v.Len(); i++ {
+			slice[i] = v.Index(i).Interface()
+		}
+		return fmt.Sprintf("(%s)", PrintSlice(slice, ", "))
 	default:
 		return fmt.Sprintf("%v", val)
 	}
@@ -48,9 +57,18 @@ func ToSQL(val any) string {
 
 func Fields(v interface{}) []interface{} {
 	val := reflect.ValueOf(v).Elem()
-	fields := make([]interface{}, val.NumField())
+	var fields []interface{}
 	for i := 0; i < val.NumField(); i++ {
-		fields[i] = val.Field(i).Addr().Interface()
+		field := val.Field(i)
+		fieldType := val.Type().Field(i)
+
+		if fieldType.Anonymous {
+			for j := 0; j < field.NumField(); j++ {
+				fields = append(fields, field.Field(j).Addr().Interface())
+			}
+		} else {
+			fields = append(fields, field.Addr().Interface())
+		}
 	}
 	return fields
 }

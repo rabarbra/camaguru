@@ -1,17 +1,17 @@
 package main
 
 import (
-	"database/sql"
 	"net/http"
+	"orm"
 	"reflect"
 	"strconv"
 )
 
-func handleRequest(model BaseModel) ProtectedDBRequestHandler {
-	return func(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
+func handleRequest(model orm.Model) ProtectedDBRequestHandler {
+	return func(w http.ResponseWriter, r *http.Request, userId int64, db *orm.Orm) {
 		switch r.Method {
-		// case http.MethodGet:
-		// 	GetManyHandler(w, r, model, db, userId)
+		case http.MethodGet:
+			GetManyHandler(w, r, model, db, userId)
 		case http.MethodPost, http.MethodPut:
 			CreateHandler(w, r, model, db, userId)
 		default:
@@ -20,8 +20,8 @@ func handleRequest(model BaseModel) ProtectedDBRequestHandler {
 	}
 }
 
-func handleRequestId(model BaseModel) ProtectedDBRequestHandler {
-	return func(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
+func handleRequestId(model orm.Model) ProtectedDBRequestHandler {
+	return func(w http.ResponseWriter, r *http.Request, userId int64, db *orm.Orm) {
 		id, err := strconv.ParseInt(r.PathValue("id"), 10, 0)
 		if err != nil || id < 1 {
 			http.NotFound(w, r)
@@ -42,8 +42,8 @@ func handleRequestId(model BaseModel) ProtectedDBRequestHandler {
 	}
 }
 
-func AddCrudRoutes(model BaseModel, db *sql.DB) {
-	routeName := ToSnakeCase(reflect.TypeOf(model).Name())
+func AddCrudRoutes(model orm.Model, db *orm.Orm) {
+	routeName := orm.ToSnakeCase(reflect.TypeOf(model).Name())
 	handler := CorsM(AuthDBM(db, handleRequest(model)))
 	handlerId := CorsM(AuthDBM(db, handleRequestId(model)))
 	http.HandleFunc("/"+routeName, handler)

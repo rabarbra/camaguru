@@ -1,14 +1,14 @@
 package main
 
 import (
-	"database/sql"
 	"net/http"
+	"orm"
 )
 
 type RequestHandler func(http.ResponseWriter, *http.Request)
-type DBRequestHandler func(http.ResponseWriter, *http.Request, *sql.DB)
+type DBRequestHandler func(http.ResponseWriter, *http.Request, *orm.Orm)
 type ProtectedRequestHandler func(w http.ResponseWriter, r *http.Request, userId int64)
-type ProtectedDBRequestHandler func(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB)
+type ProtectedDBRequestHandler func(w http.ResponseWriter, r *http.Request, userId int64, db *orm.Orm)
 
 func congigureCors(w *http.ResponseWriter, r *http.Request) bool {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
@@ -53,13 +53,13 @@ func AuthM(f ProtectedRequestHandler) RequestHandler {
 	}
 }
 
-func DBM(db *sql.DB, f DBRequestHandler) RequestHandler {
+func DBM(db *orm.Orm, f DBRequestHandler) RequestHandler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		f(w, r, db)
 	}
 }
 
-func AuthDBM(db *sql.DB, f ProtectedDBRequestHandler) RequestHandler {
+func AuthDBM(db *orm.Orm, f ProtectedDBRequestHandler) RequestHandler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userId := CheckAuthorized(r)
 		if userId == 0 {

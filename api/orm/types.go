@@ -26,9 +26,16 @@ type Filter struct {
 }
 
 func (f Filter) ToSQL(filters ...Filter) string {
+	if filters == nil {
+		return ""
+	}
 	sql := "WHERE "
 	for i, item := range filters {
-		sql += fmt.Sprintf("%s %s %s", item.Key, item.Operation, ToSQL(item.Value))
+		sql += fmt.Sprintf("%s %s %s",
+			item.Key,
+			item.Operation,
+			ToSQL(item.Value),
+		)
 		if i < len(filters)-1 {
 			sql += " AND "
 		}
@@ -47,7 +54,10 @@ func (p Pagination) ToSQL() string {
 	if p.Limit == 0 {
 		return ""
 	}
-	return fmt.Sprintf("LIMIT %d OFFSET %d", p.Limit, p.Offset)
+	return fmt.Sprintf("LIMIT %d OFFSET %d",
+		p.Limit,
+		p.Offset,
+	)
 }
 
 // Sorting
@@ -65,9 +75,15 @@ type Sort struct {
 }
 
 func (s Sort) ToSQL(sorts ...Sort) string {
+	if sorts == nil {
+		return ""
+	}
 	sql := "ORDER BY "
 	for i, item := range sorts {
-		sql += fmt.Sprintf("%s %s", item.Key, item.Direction)
+		sql += fmt.Sprintf("%s %s",
+			item.Key,
+			item.Direction,
+		)
 		if i < len(sorts)-1 {
 			sql += ", "
 		}

@@ -10,7 +10,7 @@ const Imgs = () => {
     const [selected, setSelected] = ftReact.useState(-1);
     ftReact.useEffect(async () => {
         if (!imgs && !err) {
-            const resp = await apiClient.get('img?limit=100');
+            const resp = await apiClient.get('img/?limit=100');
             if (resp?.err)
                 setErr(resp?.err)
             else if (resp?.length)
@@ -21,7 +21,7 @@ const Imgs = () => {
     }, [imgs, setImgs])
     return (
         <div>
-            <ImgInput endpoint="img" callback={()=>{
+            <ImgInput endpoint="img/" callback={()=>{
                 setImgs(null);
                 setSelected(-1);
             }}/>

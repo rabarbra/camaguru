@@ -1,23 +1,24 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"orm"
 	"strings"
 )
 
-func checkUser(db *sql.DB, u User) string {
+func checkUser(db *orm.Orm, u User) string {
 	if u.Username == "" {
 		return "username required"
-	} else if checkUserExists(db, "username", u.Username, u.Id) {
+	} else if db.Exists(&u, []orm.Filter{{Key: "username", Value: u.Username, Operation: "="}}) {
 		return "username exists"
 	}
 
 	if u.Email == "" {
 		return "email required"
-	} else if checkUserExists(db, "email", u.Email, u.Id) {
+	} else if db.Exists(&u, []orm.Filter{{Key: "email", Value: u.Email, Operation: "="}}) {
 		return "email exists"
 	}
 
@@ -28,7 +29,7 @@ func checkUser(db *sql.DB, u User) string {
 	return ""
 }
 
-func postUser(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+func postUser(w http.ResponseWriter, r *http.Request, db *orm.Orm) {
 	var u User
 	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 
@@ -38,7 +39,8 @@ func postUser(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	u.Id = 0
+	fmt.Println(u)
+	u.BaseModel.Id = 0
 	msg := checkUser(db, u)
 	if msg != "" {
 		sendError(w, http.StatusBadRequest, msg)
@@ -57,7 +59,8 @@ func postUser(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	u.Pass = hash
 
-	_, err := create(u, db)
+	_, err := db.Create(&u)
+	// _, err := create(u, db)
 	// err := createUser(db, u)
 	if err != nil {
 		log.Println("Error inserting user:", err)
@@ -74,9 +77,10 @@ func postUser(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	sendJson(w, http.StatusCreated, map[string]string{"msg": "User created successfully"})
 }
 
-func getUser(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
+func getUser(w http.ResponseWriter, r *http.Request, userId int64, db *orm.Orm) {
 	var user User
-	err := get(&user, db, userId)
+	err := db.GetOneById(&user, userId)
+	// err := get(&user, db, userId)
 	// user, err := getUserById(db, userId)
 	if err != nil {
 		sendError(w, http.StatusBadRequest, "user not found")
@@ -90,32 +94,34 @@ func getUser(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
 	sendJsonBytes(w, http.StatusOK, msg)
 }
 
-func putUser(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
-	var updates map[string]interface{}
-	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
-		return
-	}
+// func putUser(w http.ResponseWriter, r *http.Request, userId int64, db *orm.Orm) {
+// 	var updates map[string]interface{}
+// 	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+// 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+// 		return
+// 	}
 
-	if updates["pass"] != nil {
-		hash, er := HashPass(updates["pass"].(string))
-		if er != nil {
-			sendError(w, http.StatusBadRequest, "error hashing password")
-			return
-		}
-		updates["pass"] = hash
-	}
+// 	if updates["pass"] != nil {
+// 		hash, er := HashPass(updates["pass"].(string))
+// 		if er != nil {
+// 			sendError(w, http.StatusBadRequest, "error hashing password")
+// 			return
+// 		}
+// 		updates["pass"] = hash
+// 	}
 
-	err := partUpdateUser(db, userId, updates)
-	if err != nil {
-		sendError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	sendJson(w, http.StatusOK, map[string]string{"msg": "User updated successfully"})
-}
+// 	err := partUpdateUser(db, userId, updates)
+// 	if err != nil {
+// 		sendError(w, http.StatusBadRequest, err.Error())
+// 		return
+// 	}
+// 	sendJson(w, http.StatusOK, map[string]string{"msg": "User updated successfully"})
+// }
 
-func postUserAvatar(w http.ResponseWriter, r *http.Request, userId int64, db *sql.DB) {
-	u, err := getUserById(db, userId)
+func postUserAvatar(w http.ResponseWriter, r *http.Request, userId int64, db *orm.Orm) {
+	var u User
+	err := db.GetOneById(&u, userId)
+	// u, err := getUserById(db, userId)
 	if err != nil {
 		log.Println(err)
 		sendError(w, http.StatusBadRequest, "no such user")
@@ -128,7 +134,8 @@ func postUserAvatar(w http.ResponseWriter, r *http.Request, userId int64, db *sq
 		return
 	}
 	u.Avatar = strings.TrimPrefix(filePath, "assets")
-	err = updateUser(db, u)
+	err = db.Update(&u, u.BaseModel.Id)
+	// err = updateUser(db, u)
 	if err != nil {
 		log.Println(err)
 		sendError(w, http.StatusInternalServerError, err.Error())
