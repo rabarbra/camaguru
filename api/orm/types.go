@@ -25,22 +25,24 @@ type Filter struct {
 	Operation FilterOperation
 }
 
-func (f Filter) ToSQL(filters ...Filter) string {
+func (f Filter) ToSQL(filters ...Filter) (string, []any) {
+	var vals []any
 	if filters == nil {
-		return ""
+		return "", vals
 	}
 	sql := "WHERE "
 	for i, item := range filters {
-		sql += fmt.Sprintf("%s %s %s",
+		sql += fmt.Sprintf("%s %s $%d",
 			item.Key,
 			item.Operation,
-			ToSQL(item.Value),
+			i+1,
 		)
+		vals = append(vals, item.Value)
 		if i < len(filters)-1 {
 			sql += " AND "
 		}
 	}
-	return sql
+	return sql, vals
 }
 
 // Pagination

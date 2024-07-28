@@ -3,7 +3,9 @@ package orm
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"reflect"
+	"strconv"
 )
 
 func getModelFields(model Model, withId bool) string {
@@ -28,8 +30,9 @@ func getModelFields(model Model, withId bool) string {
 
 func (o *Orm) GetOne(model Model, filter []Filter) error {
 	filters := ""
+	var vals []any
 	if len(filter) != 0 {
-		filters = filter[0].ToSQL(filter...)
+		filters, vals = filter[0].ToSQL(filter...)
 	}
 	err := o.db.QueryRow(
 		fmt.Sprintf("SELECT %s FROM %s %s;",
@@ -37,17 +40,18 @@ func (o *Orm) GetOne(model Model, filter []Filter) error {
 			model.TableName(),
 			filters,
 		),
+		vals...,
 	).Scan(Fields(model)...)
 	return err
 }
 
 func (o *Orm) GetOneById(model Model, id int64) error {
 	err := o.db.QueryRow(
-		fmt.Sprintf("SELECT %s FROM %s WHERE id = %d;",
+		fmt.Sprintf("SELECT %s FROM %s WHERE id = $1;",
 			getModelFields(model, true),
 			model.TableName(),
-			id,
 		),
+		id,
 	).Scan(Fields(model)...)
 	return err
 }
@@ -59,8 +63,9 @@ func (o *Orm) GetMany(
 	pagination Pagination,
 ) ([]Model, error) {
 	filters := ""
+	var vals []any
 	if len(filter) != 0 {
-		filters = filter[0].ToSQL(filter...)
+		filters, vals = filter[0].ToSQL(filter...)
 	}
 	sorts := ""
 	if len(sort) != 0 {
@@ -74,8 +79,10 @@ func (o *Orm) GetMany(
 			sorts,
 			pagination.ToSQL(),
 		),
+		vals...,
 	)
 	if err != nil {
+		log.Println("Error in GetMany, querying dababase: ", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -83,6 +90,7 @@ func (o *Orm) GetMany(
 	for rows.Next() {
 		newModel := reflect.New(reflect.TypeOf(model).Elem()).Interface().(Model)
 		if err := rows.Scan(Fields(newModel)...); err != nil {
+			log.Println("Error in GetMany, scanning: ", err)
 			return nil, err
 		}
 		r = append(r, newModel)
@@ -92,13 +100,15 @@ func (o *Orm) GetMany(
 
 func (o *Orm) Create(model Model) (int64, error) {
 	sqlValues := ""
+	var args []any
 	values := reflect.ValueOf(model).Elem()
 	types := values.Type()
 	for i := 0; i < values.NumField(); i++ {
 		if types.Field(i).Name == "BaseModel" {
 			continue
 		}
-		sqlValues += ToSQL(values.Field(i))
+		sqlValues += "$" + strconv.Itoa(i+1)
+		args = append(args, values.Field(i).Interface())
 		if i < values.NumField()-1 {
 			sqlValues += ", "
 		}
@@ -110,6 +120,7 @@ func (o *Orm) Create(model Model) (int64, error) {
 			getModelFields(model, false),
 			sqlValues,
 		),
+		args...,
 	).Scan(&newId)
 	values.FieldByName("BaseModel").FieldByName("Id").SetInt(newId)
 	return newId, err
@@ -117,43 +128,47 @@ func (o *Orm) Create(model Model) (int64, error) {
 
 func (o *Orm) Update(model Model, id int64) error {
 	sqlValues := ""
+	var args []any
 	values := reflect.ValueOf(model).Elem()
 	types := values.Type()
 	for i := 0; i < values.NumField(); i++ {
 		if types.Field(i).Name == "BaseModel" {
 			continue
 		}
-		sqlValues += fmt.Sprintf("%s = %s",
+		sqlValues += fmt.Sprintf("%s = $%d",
 			ToSnakeCase(types.Field(i).Name),
-			ToSQL(values.Field(i)),
+			i+1,
 		)
+		args = append(args, values.Field(i).Interface())
 		if i < values.NumField()-1 {
 			sqlValues += ", "
 		}
 	}
+	args = append(args, id)
 	_, err := o.db.Exec(
-		fmt.Sprintf("UPDATE %s SET %s WHERE id = %d;",
+		fmt.Sprintf("UPDATE %s SET %s WHERE id = $%d;",
 			model.TableName(),
 			sqlValues,
-			id,
+			len(args),
 		),
+		args...,
 	)
 	return err
 }
 
 func (o *Orm) Delete(model Model, id int64) error {
-	sqlReq := fmt.Sprintf("DELETE FROM %s WHERE id = %d",
+	sqlReq := fmt.Sprintf("DELETE FROM %s WHERE id = $1",
 		model.TableName(),
-		id,
 	)
-	_, err := o.db.Exec(sqlReq)
+	_, err := o.db.Exec(sqlReq, id)
 	return err
 }
 
 func (o *Orm) Exists(model Model, filter []Filter) bool {
 	filters := ""
+	var vals []any
 	if len(filter) != 0 {
-		filters = filter[0].ToSQL(filter...)
+		filters, vals = filter[0].ToSQL(filter...)
 	}
 	err := o.db.QueryRow(
 		fmt.Sprintf("SELECT %s FROM %s %s;",
@@ -161,6 +176,7 @@ func (o *Orm) Exists(model Model, filter []Filter) bool {
 			model.TableName(),
 			filters,
 		),
+		vals...,
 	).Scan(Fields(model)...)
 	return err != sql.ErrNoRows
 }

@@ -34,8 +34,8 @@ func handleRequestId(model orm.Model) ProtectedDBRequestHandler {
 		// 	UpdateHandler(w, r, model, db, userId, id)
 		// case http.MethodPatch:
 		// 	PatchHandler(w, r, model, db, userId, id)
-		// case http.MethodDelete:
-		// 	DeleteHandler(w, r, model, db, userId, id)
+		case http.MethodDelete:
+			DeleteHandler(w, r, model, db, userId, id)
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}

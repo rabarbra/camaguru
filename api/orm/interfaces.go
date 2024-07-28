@@ -50,7 +50,7 @@ type Orm struct {
 func (o *Orm) Connect(connString string) error {
 	db, err := sql.Open("postgres", connString)
 	if err != nil {
-		log.Println(err)
+		log.Println("Error in Connect: ", err)
 		return err
 	}
 	o.db = db
@@ -66,21 +66,21 @@ func (o *Orm) Close() {
 func (o *Orm) Migrate(migrationPath string) error {
 	sqlFile, err := os.Open(migrationPath)
 	if err != nil {
-		log.Println(err)
+		log.Println("Error in Migrate, opening sql file: ", err)
 		return err
 	}
 	defer sqlFile.Close()
 
 	sqlBytes, err := io.ReadAll(sqlFile)
 	if err != nil {
-		log.Println(err)
+		log.Println("Error in Migrate, reading sql file: ", err)
 		return err
 	}
 
 	sqlCommands := string(sqlBytes)
 	_, err = o.db.Exec(sqlCommands)
 	if err != nil {
-		log.Println(err)
+		log.Println("Error in Migrate, executing migrations: ", err)
 		return err
 	}
 	return nil
