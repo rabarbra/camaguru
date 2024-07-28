@@ -1,9 +1,7 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"orm"
@@ -11,25 +9,6 @@ import (
 
 	_ "github.com/lib/pq"
 )
-
-func migrate(db *sql.DB) {
-	sqlFile, err := os.Open("./assets/migrations/01_create_tables.up.sql")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer sqlFile.Close()
-
-	sqlBytes, err := io.ReadAll(sqlFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	sqlCommands := string(sqlBytes)
-	_, err = db.Exec(sqlCommands)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
 
 func main() {
 	connString := fmt.Sprintf(
@@ -44,14 +23,6 @@ func main() {
 	db.Connect(connString)
 	defer db.Close()
 	db.Migrate("./assets/migrations/01_create_tables.up.sql")
-
-	// db, err := sql.Open("postgres", connString)
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return
-	// }
-	// defer db.Close()
-	// migrate(db)
 
 	http.HandleFunc("/me/avatar", CorsM(AuthDBM(&db, postUserAvatar)))
 	http.HandleFunc("/me", CorsM(AuthDBM(&db, getUser)))

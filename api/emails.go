@@ -12,6 +12,30 @@ import (
 	"time"
 )
 
+func SendEmail(email string, body string, subject string) error {
+	headers := make(map[string]string)
+	headers["From"] = SMTP_FROM
+	headers["To"] = email
+	headers["Subject"] = subject
+	headers["MIME-Version"] = "1.0"
+	headers["Content-Type"] = "text/html; charset=UTF-8"
+
+	var message strings.Builder
+	for key, value := range headers {
+		message.WriteString(fmt.Sprintf("%s: %s\r\n", key, value))
+	}
+	message.WriteString("\r\n")
+	message.WriteString(body)
+
+	auth := smtp.PlainAuth("", SMTP_FROM, SMTP_PASSWORD, SMTP_HOST)
+	err := smtp.SendMail(SMTP_HOST+":"+SMTP_PORT, auth, SMTP_FROM, []string{email}, []byte(message.String()))
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
 type EmailData struct {
 	Username string
 	Link     string
@@ -47,28 +71,7 @@ func sendVerificationEmail(email string, db *orm.Orm) error {
 		log.Println(err)
 		return err
 	}
-
-	headers := make(map[string]string)
-	headers["From"] = SMTP_FROM
-	headers["To"] = email
-	headers["Subject"] = "Camaguru Verify Email"
-	headers["MIME-Version"] = "1.0"
-	headers["Content-Type"] = "text/html; charset=UTF-8"
-
-	var message strings.Builder
-	for key, value := range headers {
-		message.WriteString(fmt.Sprintf("%s: %s\r\n", key, value))
-	}
-	message.WriteString("\r\n")
-	message.WriteString(body.String())
-
-	auth := smtp.PlainAuth("", SMTP_FROM, SMTP_PASSWORD, SMTP_HOST)
-	err = smtp.SendMail(SMTP_HOST+":"+SMTP_PORT, auth, SMTP_FROM, []string{email}, []byte(message.String()))
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	return nil
+	return SendEmail(email, body.String(), "Camaguru Verify Email")
 }
 
 func sendResetPasswordEmail(email string, db *orm.Orm) error {
@@ -100,26 +103,5 @@ func sendResetPasswordEmail(email string, db *orm.Orm) error {
 		log.Println(err)
 		return err
 	}
-
-	headers := make(map[string]string)
-	headers["From"] = SMTP_FROM
-	headers["To"] = email
-	headers["Subject"] = "Camaguru Reset Password"
-	headers["MIME-Version"] = "1.0"
-	headers["Content-Type"] = "text/html; charset=UTF-8"
-
-	var message strings.Builder
-	for key, value := range headers {
-		message.WriteString(fmt.Sprintf("%s: %s\r\n", key, value))
-	}
-	message.WriteString("\r\n")
-	message.WriteString(body.String())
-
-	auth := smtp.PlainAuth("", SMTP_FROM, SMTP_PASSWORD, SMTP_HOST)
-	err = smtp.SendMail(SMTP_HOST+":"+SMTP_PORT, auth, SMTP_FROM, []string{email}, []byte(message.String()))
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	return nil
+	return SendEmail(email, body.String(), "Camaguru Reset Password")
 }
