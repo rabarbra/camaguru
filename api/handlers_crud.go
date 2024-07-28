@@ -5,21 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"orm"
-	"reflect"
 )
 
 func DeleteHandler(w http.ResponseWriter, r *http.Request, model orm.Model, db *orm.Orm, userId int64, id int64) {
-	err := db.GetOneById(model, id)
-	if err != nil {
-		sendError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	ownerId := reflect.ValueOf(model).Elem().FieldByName("user_id").Int()
-	if ownerId != 0 && ownerId != userId {
-		sendError(w, http.StatusForbidden, "not yours")
-		return
-	}
-	err = db.Delete(model, id)
+	err := db.Delete(model, id)
 	if err != nil {
 		sendError(w, http.StatusBadRequest, err.Error())
 		return
@@ -27,12 +16,34 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request, model orm.Model, db *
 	sendJson(w, http.StatusOK, map[string]string{"msg": "deleted"})
 }
 
-func GetOneHandler(w http.ResponseWriter, r *http.Request, model orm.Model, db *orm.Orm, userId int64, id int64) {
-	err := db.GetOneById(model, id)
+func UpdateHandler(w http.ResponseWriter, r *http.Request, model orm.Model, db *orm.Orm, userId int64, id int64) {
+	if err := json.NewDecoder(r.Body).Decode(&model); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+	err := db.Update(model, id)
 	if err != nil {
 		sendError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	sendJson(w, http.StatusOK, map[string]string{"msg": "updated"})
+}
+
+func PatchHandler(w http.ResponseWriter, r *http.Request, model orm.Model, db *orm.Orm, userId int64, id int64) {
+	var updates map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+	err := db.Patch(model, id, updates)
+	if err != nil {
+		sendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	sendJson(w, http.StatusOK, map[string]string{"msg": "updated"})
+}
+
+func GetOneHandler(w http.ResponseWriter, r *http.Request, model orm.Model, db *orm.Orm, userId int64, id int64) {
 	msg, er := json.Marshal(model)
 	if er != nil {
 		sendError(w, http.StatusBadRequest, "error marshaling")

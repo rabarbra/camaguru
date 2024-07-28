@@ -38,6 +38,7 @@ type IOrm interface {
 	) ([]Model, error)
 	Create(model Model) (int64, error)
 	Update(model Model, id int64) error
+	Patch(model Model, id int64, values map[string]any) error
 	Delete(model Model, id int64) error
 	//
 	Exists(model Model, filter []Filter) bool

@@ -56,7 +56,7 @@ func main() {
 	http.HandleFunc("/me/avatar", CorsM(AuthDBM(&db, postUserAvatar)))
 	http.HandleFunc("/me", CorsM(AuthDBM(&db, getUser)))
 	http.HandleFunc("POST /me", CorsM(DBM(&db, postUser)))
-	// http.HandleFunc("PUT /me", CorsM(AuthDBM(&db, putUser)))
+	http.HandleFunc("PUT /me", CorsM(AuthDBM(&db, putUser)))
 
 	http.HandleFunc("/auth/signin", CorsM(DBM(&db, signin)))
 	http.HandleFunc("/auth/verify", CorsM(DBM(&db, verifyEmail)))

@@ -94,29 +94,30 @@ func getUser(w http.ResponseWriter, r *http.Request, userId int64, db *orm.Orm) 
 	sendJsonBytes(w, http.StatusOK, msg)
 }
 
-// func putUser(w http.ResponseWriter, r *http.Request, userId int64, db *orm.Orm) {
-// 	var updates map[string]interface{}
-// 	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
-// 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
-// 		return
-// 	}
+func putUser(w http.ResponseWriter, r *http.Request, userId int64, db *orm.Orm) {
+	var updates map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
 
-// 	if updates["pass"] != nil {
-// 		hash, er := HashPass(updates["pass"].(string))
-// 		if er != nil {
-// 			sendError(w, http.StatusBadRequest, "error hashing password")
-// 			return
-// 		}
-// 		updates["pass"] = hash
-// 	}
-
-// 	err := partUpdateUser(db, userId, updates)
-// 	if err != nil {
-// 		sendError(w, http.StatusBadRequest, err.Error())
-// 		return
-// 	}
-// 	sendJson(w, http.StatusOK, map[string]string{"msg": "User updated successfully"})
-// }
+	if updates["pass"] != nil {
+		hash, er := HashPass(updates["pass"].(string))
+		if er != nil {
+			sendError(w, http.StatusBadRequest, "error hashing password")
+			return
+		}
+		updates["pass"] = hash
+	}
+	var u User
+	err := db.Patch(&u, userId, updates)
+	// err := partUpdateUser(db, userId, updates)
+	if err != nil {
+		sendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	sendJson(w, http.StatusOK, map[string]string{"msg": "User updated successfully"})
+}
 
 func postUserAvatar(w http.ResponseWriter, r *http.Request, userId int64, db *orm.Orm) {
 	var u User

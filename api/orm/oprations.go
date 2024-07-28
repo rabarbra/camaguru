@@ -107,7 +107,7 @@ func (o *Orm) Create(model Model) (int64, error) {
 		if types.Field(i).Name == "BaseModel" {
 			continue
 		}
-		sqlValues += "$" + strconv.Itoa(i+1)
+		sqlValues += "$" + strconv.Itoa(i)
 		args = append(args, values.Field(i).Interface())
 		if i < values.NumField()-1 {
 			sqlValues += ", "
@@ -137,10 +137,37 @@ func (o *Orm) Update(model Model, id int64) error {
 		}
 		sqlValues += fmt.Sprintf("%s = $%d",
 			ToSnakeCase(types.Field(i).Name),
-			i+1,
+			i,
 		)
 		args = append(args, values.Field(i).Interface())
 		if i < values.NumField()-1 {
+			sqlValues += ", "
+		}
+	}
+	args = append(args, id)
+	_, err := o.db.Exec(
+		fmt.Sprintf("UPDATE %s SET %s WHERE id = $%d;",
+			model.TableName(),
+			sqlValues,
+			len(args),
+		),
+		args...,
+	)
+	return err
+}
+
+func (o *Orm) Patch(model Model, id int64, values map[string]any) error {
+	sqlValues := ""
+	var args []any
+	i := 0
+	for key, value := range values {
+		i++
+		sqlValues += fmt.Sprintf("%s = $%d",
+			key,
+			i,
+		)
+		args = append(args, value)
+		if i < len(values) {
 			sqlValues += ", "
 		}
 	}

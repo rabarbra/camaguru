@@ -110,6 +110,7 @@ func resetPassword(w http.ResponseWriter, r *http.Request, userId int64, db *orm
 	user.Pass = hash
 	err = db.Update(&user, userId)
 	if err != nil {
+		log.Println("resetPassword", err)
 		sendError(w, http.StatusBadRequest, "error updating user")
 		return
 	}
