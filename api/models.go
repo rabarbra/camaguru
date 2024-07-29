@@ -26,11 +26,19 @@ func (u *User) NewItem(r *http.Request, userId int64) error {
 	return nil
 }
 
+type ImgType string
+
+const (
+	ImgImg  ImgType = "img"
+	ImgMask ImgType = "mask"
+)
+
 type Img struct {
 	orm.BaseModel
-	Link      string `json:"link"`
-	UserId    int64  `json:"user_id"`
-	CreatedAt string `json:"created_at"`
+	Link      string  `json:"link"`
+	ImgType   ImgType `json:"img_type"`
+	UserId    int64   `json:"user_id"`
+	CreatedAt string  `json:"created_at"`
 }
 
 func (*Img) TableName() string {
@@ -44,6 +52,7 @@ func (i *Img) NewItem(r *http.Request, userId int64) error {
 	}
 	i.Link = strings.TrimPrefix(filePath, "assets")
 	i.UserId = userId
+	i.ImgType = "img"
 	i.CreatedAt = time.Now().Format(time.RFC3339)
 	return nil
 }

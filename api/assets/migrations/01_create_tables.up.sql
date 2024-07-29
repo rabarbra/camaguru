@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS imgs
     link            VARCHAR(255) NOT NULL,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     user_id         INT,
+    img_type        VARCHAR(50) DEFAULT 'img',
     PRIMARY KEY(id),
     CONSTRAINT fk_user
         FOREIGN KEY(user_id)

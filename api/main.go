@@ -35,7 +35,7 @@ func main() {
 	http.HandleFunc("/auth/reset", CorsM(AuthDBM(&db, resetPassword)))
 
 	AddCrudRoutes(&Img{}, &db)
-	// AddCrudRoutes(&Like{}, db)
+	// AddCrudRoutes(&Like{}, &db)
 	// AddCrudRoutes(&Comment{}, db)
 
 	fs := http.FileServer(http.Dir("./assets/static"))
